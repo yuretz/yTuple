@@ -13,15 +13,13 @@ public static class Lisp
 
     private static Expression ParseExpr(object? expression) => expression switch
     {
-        (atom, ITuple value) => Expression.Not(Expression.TypeIs(ParseExpr(value), typeof(IEnumerable<object>))),
+        var value when Equals(value, nil) => Expression.Constant(_nilResult),
 
-        (car, var value) when Equals(value, nil) => Expression.Constant(_nilResult),
+        (atom, ITuple value) => Expression.Not(Expression.TypeIs(ParseExpr(value), typeof(IEnumerable<object>))),        
 
         (car, ITuple value) => Expression.Call(
             _first, 
             Expression.Convert(ParseExpr(value), typeof(IEnumerable<object>))),
-
-        (cdr, var value) when Equals(value, nil) => Expression.Constant(_nilResult),
 
         (cdr, ITuple value) => Expression.Call(
             _skip, 
@@ -42,7 +40,7 @@ public static class Lisp
         var value => Expression.Constant(value)
     };
 
-    private static object? First(IEnumerable<object?> items) => items.FirstOrDefault(Enumerable.Empty<object?>());
+    private static object? First(IEnumerable<object?> items) => items.FirstOrDefault(_nilResult);
     
     private static IEnumerable<object?> _nilResult = Enumerable.Empty<object?>();
 
