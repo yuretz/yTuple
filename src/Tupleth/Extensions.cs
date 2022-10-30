@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Tupleth;
 
-internal static class Extensions
+public static class Extensions
 {
     public static IEnumerable<object?> ToEnumerable(this ITuple tuple)
     {
@@ -12,4 +12,5 @@ internal static class Extensions
             yield return tuple[i] is ITuple nested ? nested.ToEnumerable() : tuple[i];
         }
     }
+
 }

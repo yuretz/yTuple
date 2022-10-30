@@ -5,6 +5,8 @@ VisualStudioVersion = 17.4.33006.217
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tupleth", "src\Tupleth\Tupleth.csproj", "{638570F2-71EF-4C8C-9E64-2893D7789C53}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tupleth.Tests", "test\Tupleth.Tests\Tupleth.Tests.csproj", "{766430AE-E1B3-4DEE-AFDE-5AA5B4D781AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{638570F2-71EF-4C8C-9E64-2893D7789C53}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{638570F2-71EF-4C8C-9E64-2893D7789C53}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{638570F2-71EF-4C8C-9E64-2893D7789C53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{766430AE-E1B3-4DEE-AFDE-5AA5B4D781AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{766430AE-E1B3-4DEE-AFDE-5AA5B4D781AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{766430AE-E1B3-4DEE-AFDE-5AA5B4D781AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{766430AE-E1B3-4DEE-AFDE-5AA5B4D781AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

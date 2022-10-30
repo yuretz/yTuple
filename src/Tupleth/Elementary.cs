@@ -2,7 +2,7 @@
 
 public static class Elementary
 {
-    public static readonly object? nil = null;
+    public static readonly ValueTuple nil = default;
 
     public const string atom = "atom";
     public const string car = "car";
