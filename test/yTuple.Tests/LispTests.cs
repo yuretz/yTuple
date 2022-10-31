@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Xunit.Sdk;
 
 namespace yTuple.Tests;
 
@@ -148,6 +147,46 @@ public class LispTests
     public void ConsComplex()
     {
         AssertResult(((1, 2), 3, (4, 5)), Run((cons, (quote, (1, 2)), (cons, 3, (cons, (quote, (4, 5)), nil)))));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    [InlineData(42)]
+    [InlineData("foo")]
+    public void EqAtom(object? value)
+    {
+        AssertResult(true, Run((eq, value, value)));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    [InlineData(42)]
+    [InlineData("foo")]
+    public void EqQuoteAtom(object? value)
+    {
+        AssertResult(true, Run((eq, value, (quote, value))));
+    }
+
+    [Fact]
+    public void EqNil()
+    {
+        AssertResult(true, Run((eq, nil, nil)));
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, 0)]
+    [InlineData(null, "foo")]
+    [InlineData(42, 41)]
+    [InlineData("foo", "bar")]
+    [InlineData("42", 42)]
+    public void NotEqAtom(object? left, object? right)
+    {
+        AssertResult(false, Run((eq, left, right)));
     }
 
     private void AssertResult(object? expected, object? actual)

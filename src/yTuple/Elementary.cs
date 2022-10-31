@@ -13,10 +13,10 @@ public static class Elementary
     public const string lambda = "lambda";
     public const string label = "label";
 
-    public const string eq = "==";
-    public const string and = "&&";
-    public const string or = "||";
-    public const string not = "!";
+    public const string eq = "eq";
+    public const string and = "and";
+    public const string or = "or";
+    public const string not = "not";
 
     public const string plus = "+";
     public const string minus = "-";

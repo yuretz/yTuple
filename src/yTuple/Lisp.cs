@@ -33,9 +33,12 @@ public static class Lisp
 
         (quote, var value) => Expression.Constant(value is ITuple tuple ? tuple.ToEnumerable() : value),
 
-        (eq, ITuple left, ITuple right) => Expression.Equal(ParseExpr(left), ParseExpr(right)),
+        (eq, var left, var right) => Expression.Call(
+            _equals,
+            Expression.Convert(ParseExpr(left), typeof(object)), 
+            Expression.Convert(ParseExpr(right), typeof(object))),
 
-        (var name, _) => throw new NotImplementedException($"Unknown function {name}"),
+        ITuple tuple => throw new NotImplementedException($"Unknown function {tuple[0]}"),
 
         var value => Expression.Constant(value)
     };
@@ -54,4 +57,7 @@ public static class Lisp
     private static MethodInfo _prepend = typeof(Enumerable)
         .GetMethod("Prepend", BindingFlags.Static | BindingFlags.Public)!
         .MakeGenericMethod(typeof(object));
+
+    private static MethodInfo _equals = typeof(object)
+        .GetMethod("Equals", BindingFlags.Static | BindingFlags.Public)!;
 }
