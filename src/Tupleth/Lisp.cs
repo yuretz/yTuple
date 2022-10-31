@@ -29,7 +29,7 @@ public static class Lisp
         (cons, var left, var right) => Expression.Call(
             _prepend, 
             Expression.Convert(ParseExpr(right), typeof(IEnumerable<object>)),
-            ParseExpr(left)),
+            Expression.Convert(ParseExpr(left), typeof(object))),
 
         (quote, var value) => Expression.Constant(value is ITuple tuple ? tuple.ToEnumerable() : value),
 

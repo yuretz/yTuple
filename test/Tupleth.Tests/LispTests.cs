@@ -125,6 +125,31 @@ public class LispTests
         AssertResult(value.ToEnumerable().Skip(1), Run((cdr, (quote, value))));
     }
 
+    [Fact]
+    public void ConsNil()
+    {
+        var value = 42;
+        AssertResult(ValueTuple.Create(value), Run((cons, value, nil)));
+    }
+
+    [Fact]
+    public void ConsMany()
+    {
+        AssertResult((1, 2, 3), Run((cons, 1, (cons, 2, (cons, 3, nil)))));
+    }
+
+    [Fact]
+    public void ConsQuote()
+    {
+        AssertResult((1, 2, 3, 4), Run((cons, 1, (quote, (2, 3, 4)))));
+    }
+
+    [Fact]
+    public void ConsComplex()
+    {
+        AssertResult(((1, 2), 3, (4, 5)), Run((cons, (quote, (1, 2)), (cons, 3, (cons, (quote, (4, 5)), nil)))));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)
