@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using Xunit.Sdk;
 
-namespace Tupleth.Tests;
+namespace yTuple.Tests;
 
 
 public class LispTests

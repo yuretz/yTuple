@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Tupleth\Tupleth.csproj" />
+    <ProjectReference Include="..\..\src\yTuple\yTuple.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Runtime.CompilerServices;
 
-namespace Tupleth;
+namespace yTuple;
 
 public static class Extensions
 {

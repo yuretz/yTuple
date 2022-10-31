@@ -1,4 +1,4 @@
-﻿namespace Tupleth;
+﻿namespace yTuple;
 
 public static class Elementary
 {

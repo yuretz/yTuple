@@ -1,9 +1,9 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using static Tupleth.Elementary;
+using static yTuple.Elementary;
 
-namespace Tupleth;
+namespace yTuple;
 
 
 public static class Lisp
