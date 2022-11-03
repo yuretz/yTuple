@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System.Runtime.CompilerServices;
 
 namespace yTuple.Tests;
@@ -187,6 +188,33 @@ public class LispTests
     public void NotEqAtom(object? left, object? right)
     {
         AssertResult(false, Run((eq, left, right)));
+    }
+
+    [Fact]
+    public void CondSimple()
+    {
+        for (var i = 0; i < 3; i++)
+        {
+            AssertResult(i, Run((cond, (i == 0, 0), (i == 1, 1), (i == 2, 2))));
+        }
+    }
+
+
+    [Theory]
+    [InlineData(true, "yes")]
+    [InlineData(false, "no")]
+    [InlineData(null, "yes")]
+    [InlineData(42, "yes")]
+    [InlineData("foo", "yes")]
+    public void CondTruthyTests(object value, string result)
+    {
+        AssertResult(result, Run((cond, (value, "yes"), (true, "no"))));
+    }
+
+    [Fact]
+    public void CondNilTest1() 
+    {
+        AssertResult("no", Run((cond, (nil, "yes"), (true, "no"))));
     }
 
     private void AssertResult(object? expected, object? actual)
