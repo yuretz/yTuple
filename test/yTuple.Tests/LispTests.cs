@@ -217,6 +217,18 @@ public class LispTests
         AssertResult("no", Run((cond, (nil, "yes"), (true, "no"))));
     }
 
+    [Fact]
+    public void DynamicCall1()
+    {
+        AssertResult(1, Run(((cond, (1, car), (2, cdr)), (quote, (1, 2, 3)))));
+    }
+
+    [Fact]
+    public void DynamicCall2()
+    {
+        AssertResult((2, 3), Run(((cond, ((eq, 42, 43), car), (true, cdr)), (quote, (1, 2, 3)))));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

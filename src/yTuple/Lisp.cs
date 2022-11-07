@@ -15,32 +15,26 @@ public static class Lisp
     private static Expression ParseExpr(object? expression) => expression switch
     {
         var value when Equals(value, nil) => Expression.Constant(NilResult),
+        
+        (Quote, var value) => Expression.Constant(value is ITuple tuple ? tuple.ToEnumerable() : value),
 
-        (atom, ITuple value) => Expression.Not(Expression.TypeIs(ParseExpr(value), typeof(IEnumerable<object>))),
-
-        (car, ITuple value) => Expression.Call(
-            _first,
-            Expression.Convert(ParseExpr(value), typeof(IEnumerable<object>))),
-
-        (cdr, ITuple value) => Expression.Call(
-            _skip,
-            Expression.Convert(ParseExpr(value), typeof(IEnumerable<object>)),
-            Expression.Constant(1)),
-
-        (cons, var left, var right) => Expression.Call(
-            _prepend,
-            Expression.Convert(ParseExpr(right), typeof(IEnumerable<object>)),
-            Expression.Convert(ParseExpr(left), typeof(object))),
-
-        (quote, var value) => Expression.Constant(value is ITuple tuple ? tuple.ToEnumerable() : value),
-
-        (eq, var left, var right) => Expression.Call(
-            _equals,
-            Expression.Convert(ParseExpr(left), typeof(object)),
-            Expression.Convert(ParseExpr(right), typeof(object))),
+        ITuple value when value[0] is Operator op => op.Parse(
+            Enumerable.Range(1, value.Length - 1)
+                .Select(index => ParseExpr(value[index]))
+                .ToArray()),
 
         ITuple tuple when Equals(tuple[0], cond) => ParseCond(tuple),
-            
+        
+        ITuple tuple when tuple[0] is ITuple func => 
+            Expression.Call(
+                _apply,
+                ParseExpr(func),
+                Expression.NewArrayInit(
+                    typeof(object),
+                    Enumerable.Range(1, tuple.Length - 1)
+                        .Select(index => ParseExpr(tuple[index]))
+                        .ToArray())),
+        
         ITuple tuple => throw new NotImplementedException($"Unknown function {tuple[0]}"),
 
         var value => Expression.Constant(value)
@@ -64,26 +58,20 @@ public static class Lisp
         return Expression.Condition(check, rest, otherwise);
     }
 
+    private static object? Apply(object? func, object?[] arguments) => func switch
+    {
+        Operator op => op.Run.DynamicInvoke(arguments),
+        Symbol sym => throw new NotSupportedException($"{sym.Name} cannot be called dynamically"),
+        _ => throw new NotImplementedException($"{func} is not a function")
+    };
+
     private static bool IsFalse(object? value) => value is bool flag && !flag || value == NilResult;
 
     private static bool IsTrue(object? value) => !IsFalse(value);
-
-    private static object? First(IEnumerable<object?> items) => items.FirstOrDefault(NilResult);
     
     private static MethodInfo _isTrue = typeof(Lisp)
         .GetMethod("IsTrue", BindingFlags.Static | BindingFlags.NonPublic)!;
 
-    private static MethodInfo _first = typeof(Lisp)
-        .GetMethod("First", BindingFlags.Static | BindingFlags.NonPublic)!;
-
-    private static MethodInfo _skip = typeof(Enumerable)
-        .GetMethod("Skip", BindingFlags.Static | BindingFlags.Public)!
-        .MakeGenericMethod(typeof(object));
-
-    private static MethodInfo _prepend = typeof(Enumerable)
-        .GetMethod("Prepend", BindingFlags.Static | BindingFlags.Public)!
-        .MakeGenericMethod(typeof(object));
-
-    private static MethodInfo _equals = typeof(object)
-        .GetMethod("Equals", BindingFlags.Static | BindingFlags.Public)!;
+    private static MethodInfo _apply = typeof(Lisp)
+        .GetMethod("Apply", BindingFlags.Static | BindingFlags.NonPublic)!;
 }

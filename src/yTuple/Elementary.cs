@@ -4,16 +4,21 @@ public static class Elementary
 {
     public static readonly ValueTuple nil = default;
 
-    public const string atom = "atom";
-    public const string car = "car";
-    public const string cdr = "cdr";
-    public const string cons = "cons";
-    public const string quote = "quote";
-    public const string cond = "cond";
+    // special operators
+    public static readonly Symbol quote = new Quote();
+    public static readonly Symbol cond = new Cond();
+
+    public static readonly Operator atom = new Atom();
+    public static readonly Operator car = new Car();
+    public static readonly Operator cdr = new Cdr();
+    public static readonly Operator cons = new Cons();
+    
+
+    
     public const string lambda = "lambda";
     public const string label = "label";
 
-    public const string eq = "eq";
+    public static readonly Operator eq = new Eq();
     public const string and = "and";
     public const string or = "or";
     public const string not = "not";
