@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 
 namespace yTuple.Tests;
 
-
 public class LispTests
 {
     [Theory]
@@ -101,28 +100,28 @@ public class LispTests
     public void CdrList1()
     {
         var value = (1, 2, 3);
-        AssertResult(value.ToEnumerable().Skip(1), Run((cdr, (quote, value))));
+        AssertResult(value.ToEnumerable(true).Skip(1), Run((cdr, (quote, value))));
     }
 
     [Fact]
     public void CdrList2()
     {
         var value = ("foo", "bar", "baz");
-        AssertResult(value.ToEnumerable().Skip(1), Run((cdr, (quote, value))));
+        AssertResult(value.ToEnumerable(true).Skip(1), Run((cdr, (quote, value))));
     }
 
     [Fact]
     public void CdrList3()
     {
         var value = (("foo", "bar"), "baz");
-        AssertResult(value.ToEnumerable().Skip(1), Run((cdr, (quote, value))));
+        AssertResult(value.ToEnumerable(true).Skip(1), Run((cdr, (quote, value))));
     }
 
     [Fact]
     public void CdrList4()
     {
         var value = Tuple.Create(42);
-        AssertResult(value.ToEnumerable().Skip(1), Run((cdr, (quote, value))));
+        AssertResult(value.ToEnumerable(true).Skip(1), Run((cdr, (quote, value))));
     }
 
     [Fact]
@@ -233,7 +232,7 @@ public class LispTests
     {
         if(expected is ITuple tuple)
         {
-            expected = tuple.ToEnumerable();
+            expected = tuple.ToEnumerable(true);
         }
 
         if(expected is IEnumerable<object?> expectedEnumrable

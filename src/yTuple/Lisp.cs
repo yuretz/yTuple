@@ -16,7 +16,7 @@ public static class Lisp
     {
         var value when Equals(value, nil) => Expression.Constant(NilResult),
         
-        (Quote, var value) => Expression.Constant(value is ITuple tuple ? tuple.ToEnumerable() : value),
+        (Quote, var value) => Expression.Constant(value is ITuple tuple ? tuple.ToEnumerable(true) : value),
 
         ITuple value when value[0] is Operator op => op.Parse(
             Enumerable.Range(1, value.Length - 1)
@@ -45,14 +45,14 @@ public static class Lisp
         var checkResult = Expression.Variable(typeof(object));
         return Expression.Block(
             new[] { checkResult },
-            tuple.ToEnumerable().Skip(1).Cast<IEnumerable<object?>>().Reverse().Aggregate(
+            tuple.ToEnumerable(false).Skip(1).Cast<ITuple>().Reverse().Aggregate(
                 (Expression)Expression.Convert(ParseExpr(NilResult), typeof(object)),
                 (result, item) => ParseCondClause(result, item, checkResult)));
     }
 
-    private static Expression ParseCondClause(Expression otherwise, IEnumerable<object?> clause, ParameterExpression checkResult)
+    private static Expression ParseCondClause(Expression otherwise, ITuple clause, ParameterExpression checkResult)
     {
-        var items = clause.Select(ParseExpr).ToList();
+        var items = clause.ToEnumerable(false).Select(ParseExpr).ToList();
         var check = Expression.Call(_isTrue, Expression.Assign(checkResult, Expression.Convert(items.FirstOrDefault(ParseExpr(NilResult)), typeof(object))));
         var rest = Expression.Convert(Expression.Block(items.Skip(1).Prepend(checkResult)), typeof(object));
         return Expression.Condition(check, rest, otherwise);
