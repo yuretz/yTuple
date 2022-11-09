@@ -3,9 +3,12 @@ using System.Reflection;
 
 namespace yTuple;
 
-public abstract record Symbol(string Name);
+public abstract record Symbol(string Name)
+{
+    public override string ToString() => Name;
+}
 
-public abstract record Operator(string Name, int Arity): Symbol(Name)
+public abstract record Op(string Name, int Arity): Symbol(Name)
 {
     public abstract Expression Parse(params Expression[] arguments);
 
@@ -27,8 +30,11 @@ public abstract record Operator(string Name, int Arity): Symbol(Name)
         }
     }
 
-    protected static MethodInfo GetMethod(LambdaExpression lambda) =>
-        ((MethodCallExpression)lambda.Body).Method;
+    protected static MethodInfo GetMethod(LambdaExpression lambda)
+    {
+        ArgumentNullException.ThrowIfNull(lambda);
+        return ((MethodCallExpression)lambda.Body).Method;
+    }
 
     private Delegate? _run;
 }
@@ -37,13 +43,17 @@ internal record Quote(): Symbol("quote");
 
 internal record Cond(): Symbol("cond");
 
-internal record Atom(): Operator("atom", 1)
+internal record Lambda(): Symbol("lambda");
+
+internal record Label(): Symbol("label");
+
+internal record Atom(): Op("atom", 1)
 {
     public override Expression Parse(params Expression[] arguments) => 
         Expression.Not(Expression.TypeIs(arguments[0], typeof(IEnumerable<object>)));
 }
 
-internal record Car() : Operator("car", 1)
+internal record Car() : Op("car", 1)
 {
     public override Expression Parse(params Expression[] arguments) =>
         Expression.Call(
@@ -55,7 +65,7 @@ internal record Car() : Operator("car", 1)
         GetMethod((IEnumerable<object?> items) => items.FirstOrDefault(Lisp.NilResult));
 }
 
-internal record Cdr() : Operator("cdr", 1)
+internal record Cdr() : Op("cdr", 1)
 {
     public override Expression Parse(params Expression[] arguments) =>
         Expression.Call(
@@ -67,7 +77,7 @@ internal record Cdr() : Operator("cdr", 1)
         GetMethod((IEnumerable<object?> items) => items.Skip(1));
 }
 
-internal record Cons() : Operator("cons", 2)
+internal record Cons() : Op("cons", 2)
 {
     public override Expression Parse(params Expression[] arguments) =>
         Expression.Call(
@@ -79,7 +89,7 @@ internal record Cons() : Operator("cons", 2)
         GetMethod((IEnumerable<object?> items, object element) => items.Prepend(element));
 }
 
-internal record Eq() : Operator("eq", 2)
+internal record Eq() : Op("eq", 2)
 {
     public override Expression Parse(params Expression[] arguments) =>
         Expression.Call(

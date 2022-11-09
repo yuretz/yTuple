@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace yTuple;
 
@@ -10,6 +8,8 @@ public static class Extensions
 
     public static IEnumerable<object?> ToEnumerable(this ITuple tuple, bool recurse)
     {
+        ArgumentNullException.ThrowIfNull(tuple);
+
         for(var i = 0; i < tuple.Length; i++)
         {
             yield return tuple[i] switch
@@ -21,11 +21,16 @@ public static class Extensions
         }
     }
 
-    public static ITuple ToTuple(this IEnumerable<object?> enumerable, bool recurse) =>
-        ToTuple(enumerable.GetEnumerator(), recurse);
+    public static ITuple ToTuple(this IEnumerable<object?> enumerable, bool recurse)
+    {
+        ArgumentNullException.ThrowIfNull(enumerable);
+        return ToTuple(enumerable.GetEnumerator(), recurse);
+    }
 
     public static ITuple ToTuple(IEnumerator<object?> enumerator, bool recurse)
     {
+        ArgumentNullException.ThrowIfNull(enumerator);
+
         var items = new List<object?>();
 
         while(items.Count < 7 && enumerator.MoveNext())

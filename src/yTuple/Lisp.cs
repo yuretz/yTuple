@@ -18,7 +18,7 @@ public static class Lisp
         
         (Quote, var value) => Expression.Constant(value is ITuple tuple ? tuple.ToEnumerable(true) : value),
 
-        ITuple value when value[0] is Operator op => op.Parse(
+        ITuple value when value[0] is Op op => op.Parse(
             Enumerable.Range(1, value.Length - 1)
                 .Select(index => ParseExpr(value[index]))
                 .ToArray()),
@@ -60,7 +60,7 @@ public static class Lisp
 
     private static object? Apply(object? func, object?[] arguments) => func switch
     {
-        Operator op => op.Run.DynamicInvoke(arguments),
+        Op op => op.Run.DynamicInvoke(arguments),
         Symbol sym => throw new NotSupportedException($"{sym.Name} cannot be called dynamically"),
         _ => throw new NotImplementedException($"{func} is not a function")
     };
