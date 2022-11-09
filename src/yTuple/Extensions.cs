@@ -4,7 +4,7 @@ namespace yTuple;
 
 public static class Extensions
 {
-    public static readonly IEnumerable<object?> Empty= Enumerable.Empty<object?>();
+    public static readonly IEnumerable<object?> Empty = Enumerable.Empty<object?>();
 
     public static IEnumerable<object?> ToEnumerable(this ITuple tuple, bool recurse)
     {
