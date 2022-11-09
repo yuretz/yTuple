@@ -6,6 +6,7 @@ namespace yTuple;
 
 public static class Extensions
 {
+    public static readonly IEnumerable<object?> Empty= Enumerable.Empty<object?>();
 
     public static IEnumerable<object?> ToEnumerable(this ITuple tuple, bool recurse)
     {
@@ -13,7 +14,7 @@ public static class Extensions
         {
             yield return tuple[i] switch
             {
-                ITuple { Length: 0 } when recurse => Lisp.NilResult,
+                ITuple { Length: 0 } when recurse => Empty,
                 ITuple nested when recurse => nested.ToEnumerable(recurse),
                 _ => tuple[i]
             };
@@ -29,7 +30,9 @@ public static class Extensions
 
         while(items.Count < 7 && enumerator.MoveNext())
         {
-            items.Add(enumerator.Current);
+            items.Add(recurse && enumerator.Current is IEnumerable<object> nested 
+                ? ToTuple(nested, recurse) 
+                : enumerator.Current);
         }
 
         if(items.Count == 7)
@@ -60,4 +63,5 @@ public static class Extensions
      typeof(ValueTuple   < , , , , , >   ),
      typeof(ValueTuple  < , , , , , , >  ),
      typeof(ValueTuple < , , , , , , , > )};
+     // it's Christmas soon
 }
