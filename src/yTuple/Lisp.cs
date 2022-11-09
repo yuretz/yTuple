@@ -10,7 +10,7 @@ public static class Lisp
     public static Expression<Func<object?>> Parse(ITuple program) => 
         Expression.Lambda<Func<object?>>(Expression.Convert(ParseExpr(program), typeof(object)));
 
-    internal static IEnumerable<object?> NilResult = Enumerable.Empty<object?>();
+    internal static IEnumerable<object?> NilResult = Extensions.Empty;
 
     private static Expression ParseExpr(object? expression) => expression switch
     {
