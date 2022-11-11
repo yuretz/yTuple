@@ -10,7 +10,7 @@ public static class Lisp
     public static Expression<Func<object?>> Parse(ITuple program) => 
         Expression.Lambda<Func<object?>>(Expression.Convert(ParseExpr(program), typeof(object)));
 
-    internal static IEnumerable<object?> NilResult = Extensions.Empty;
+    internal static readonly IEnumerable<object?> NilResult = Extensions.Empty;
 
     private static Expression ParseExpr(object? expression) => expression switch
     {
@@ -58,6 +58,7 @@ public static class Lisp
         return Expression.Condition(check, rest, otherwise);
     }
 
+
     private static object? Apply(object? func, object?[] arguments) => func switch
     {
         Op op => op.Run.DynamicInvoke(arguments),
@@ -69,9 +70,9 @@ public static class Lisp
 
     private static bool IsTrue(object? value) => !IsFalse(value);
     
-    private static MethodInfo _isTrue = typeof(Lisp)
-        .GetMethod("IsTrue", BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static readonly MethodInfo _isTrue = typeof(Lisp)
+        .GetMethod(nameof(IsTrue), BindingFlags.Static | BindingFlags.NonPublic)!;
 
-    private static MethodInfo _apply = typeof(Lisp)
-        .GetMethod("Apply", BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static readonly MethodInfo _apply = typeof(Lisp)
+        .GetMethod(nameof(Apply), BindingFlags.Static | BindingFlags.NonPublic)!;
 }
