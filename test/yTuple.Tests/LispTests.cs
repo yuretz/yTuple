@@ -228,6 +228,30 @@ public class LispTests
         AssertResult((2, 3), Run(((cond, ((eq, 42, 43), car), (true, cdr)), (quote, (1, 2, 3)))));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    [InlineData(42)]
+    [InlineData("foo")]
+    public void LambdaIdentity(object value)
+    {
+        var x = Declare("x");
+        AssertResult(value, Run(((lambda, Single(x), x), value)));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(null)]
+    [InlineData(42)]
+    [InlineData("foo")]
+    public void LambdaValue(object value)
+    {
+        AssertResult(value, Run(Single((lambda, nil, value))));
+    }
+
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

@@ -8,6 +8,8 @@ public abstract record Symbol(string Name)
     public override string ToString() => Name;
 }
 
+internal record Var(string Name): Symbol(Name);
+
 public abstract record Op(string Name, int Arity): Symbol(Name)
 {
     public abstract Expression Parse(params Expression[] arguments);

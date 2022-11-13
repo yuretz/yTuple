@@ -1,7 +1,10 @@
-﻿namespace yTuple;
+﻿using System.Runtime.CompilerServices;
+
+namespace yTuple;
 
 public static class Elementary
 {
+
     public static readonly ValueTuple nil;
 
     // special forms and operators
@@ -24,4 +27,12 @@ public static class Elementary
     public const string minus = "-";
     public const string mul = "*";
     public const string div = "/";
+
+    public static ValueTuple<T> Single<T>(T value) => new(value);
+
+    public static Symbol Declare(string name) => new Var(name);
+    public static ITuple Declare(params string[] names) => names.Select(name => new Var(name)).ToTuple(false);
+
+
+
 }
