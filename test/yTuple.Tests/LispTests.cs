@@ -1,4 +1,3 @@
-using Newtonsoft.Json.Linq;
 using System.Runtime.CompilerServices;
 
 namespace yTuple.Tests;
@@ -249,6 +248,22 @@ public class LispTests
     public void LambdaValue(object value)
     {
         AssertResult(value, Run(Single((lambda, nil, value))));
+    }
+
+    [Theory]
+    [InlineData(42, 42, "yes")]
+    [InlineData(42, 43, "no")]
+    [InlineData(true, true, "yes")]
+    [InlineData("foo", "bar", "no")]
+    public void LambdaWithArgs(object left, object right, string result)
+    {
+        var (x, y) = Declare("x", "y");
+        AssertResult(result, Run(
+            ((lambda, (x, y),
+                (cond,
+                    ((eq, x, y), "yes"),
+                    (true, "no"))), 
+            left, right)));
     }
 
 
