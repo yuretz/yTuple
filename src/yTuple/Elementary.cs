@@ -31,8 +31,17 @@ public static class Elementary
     public static ValueTuple<T> Single<T>(T value) => new(value);
 
     public static Symbol Declare(string name) => new Var(name);
-    public static ITuple Declare(params string[] names) => names.Select(name => new Var(name)).ToTuple(false);
+    
+    public static (Symbol, Symbol) Declare(string v1, string v2) => 
+        (new Var(v1), new Var(v2));
 
+    public static (Symbol, Symbol, Symbol) Declare(string v1, string v2, string v3) => 
+        (new Var(v1), new Var(v2), new Var(v3));
 
+    public static (Symbol, Symbol, Symbol, Symbol) Declare(string v1, string v2, string v3, string v4) => 
+        (new Var(v1), new Var(v2), new Var(v3), new Var(v4));
+
+    public static (Symbol, Symbol, Symbol, Symbol, Symbol) Declare(string v1, string v2, string v3, string v4, string v5) =>
+        (new Var(v1), new Var(v2), new Var(v3), new Var(v4), new Var(v5));
 
 }
