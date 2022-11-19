@@ -370,6 +370,25 @@ public class LispTests
         AssertResult(values.Aggregate((result, item) => result / item), Run(program));
     }
 
+    [Theory]
+    [InlineData(false, 9)]
+    [InlineData(true, 24)]
+    public void AddOrMulDynamic(bool flag, int result)
+    {
+        AssertResult(result, Run(((cond, (flag, mul), (!flag, add)), 2, 3, 4)));
+    }
+
+    [Theory]
+    [InlineData(false, 6)]
+    [InlineData(true, 3)]
+    public void SubOrDivDynamic(bool flag, int result)
+    {
+        var x = Declare("x");
+        AssertResult(result, Run(
+            ((lambda, Single(x), (x, 9, 3)), 
+            (cond, (flag, div), (!flag, sub)))));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

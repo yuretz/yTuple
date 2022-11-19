@@ -32,16 +32,16 @@ public static class Lisp
         ITuple tuple when Equals(tuple[0], lambda) => ParseLambda(tuple, scope),
         
         // dynamic call
-        ITuple tuple when tuple[0] is ITuple func => 
+        ITuple tuple when tuple[0] is ITuple or Symbol => 
             Expression.Call(
                 _apply,
-                ParseExpr(func, scope),
+                ParseExpr(tuple[0], scope),
                 Expression.NewArrayInit(
                     typeof(object),
                     Enumerable.Range(1, tuple.Length - 1)
                         .Select(index => Expression.Convert(ParseExpr(tuple[index], scope), typeof(object)))
                         .ToArray())),
- 
+
         ITuple tuple => throw new NotImplementedException($"Unknown function {tuple[0]}"),
 
         Symbol symbol => scope.TryGetValue(symbol, out var result) 
@@ -102,7 +102,8 @@ public static class Lisp
 
     private static object? Apply(object? func, object?[] arguments) => func switch
     {
-        Op op => op.Run.DynamicInvoke(arguments),
+        Op op when op.Arity >= 0 => op.Run.DynamicInvoke(arguments),
+        Op op when op.Arity < 0 => op.Run.DynamicInvoke(new[] { arguments }),
         Delegate dlg => dlg.DynamicInvoke(arguments),
         Symbol sym => throw new NotSupportedException($"{sym.Name} cannot be called dynamically"),
         _ => throw new NotImplementedException($"{func} is not a function")

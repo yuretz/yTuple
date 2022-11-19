@@ -129,15 +129,16 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
                         return Expression.Lambda<Func<object, object, object>>(
                             Expression.Convert(
                                 Expression.MakeBinary(Type, Expression.Convert(result, type), Expression.Convert(item, type)),
-                                typeof(object)))
-                            .Compile();
+                                typeof(object)),
+                            result,
+                            item).Compile();
                     });
 
                 _run = (object[] args) =>
-                args.Length > 1  
-                ? args.Aggregate(
-                    (result, item) => _typed[PromoteNumeric(result.GetType(), item.GetType())](result, item))
-                : _typed[PromoteNumeric(Identity.GetType(), args[0].GetType())](Identity, args[0]); 
+                    args.Length > 1  
+                        ? args.Aggregate(
+                            (result, item) => _typed[PromoteNumeric(result.GetType(), item.GetType())](result, item))
+                        : _typed[PromoteNumeric(Identity.GetType(), args[0].GetType())](Identity, args[0]); 
             }
 
             return _run;
