@@ -210,7 +210,7 @@ public class LispTests
     }
 
     [Fact]
-    public void CondNilTest1() 
+    public void CondNilTest1()
     {
         AssertResult("no", Run((cond, (nil, "yes"), (true, "no"))));
     }
@@ -262,10 +262,113 @@ public class LispTests
             ((lambda, (x, y),
                 (cond,
                     ((eq, x, y), "yes"),
-                    (true, "no"))), 
+                    (true, "no"))),
             left, right)));
     }
 
+    [Theory]
+    [InlineData(42)]
+    [InlineData(42.5)]
+    [InlineData(-20)]
+    public void AddOne(object value)
+    {
+        AssertResult(value, Run((add, value)));
+    }
+
+    [Theory]
+    [InlineData(1, 2, 3)]
+    [InlineData(1.5, 2, 3.5)]
+    [InlineData(-1, 2.5, 1.5)]
+    public void AddTwo(object left, object right, object result)
+    {
+        AssertResult(result, Run((add, left, right)));
+    }
+
+    [Fact]
+    public void AddMany()
+    {
+        var values = new[] { 1, 2, 3, 4, 5, 15, -3, -7, 0, 42 };
+        var program = values.Cast<object>().Prepend(add).ToTuple(false);
+        AssertResult(values.Sum(), Run(program));
+    }
+
+    [Theory]
+    [InlineData(42, -42)]
+    [InlineData(42.5, -42.5)]
+    [InlineData(-20, 20)]
+    public void SubOne(object value, object result)
+    {
+        AssertResult(result, Run((sub, value)));
+    }
+
+    [Theory]
+    [InlineData(1, 2, -1)]
+    [InlineData(2, 1.5, 0.5)]
+    [InlineData(-1, 2.5, -3.5)]
+    public void SubTwo(object left, object right, object result)
+    {
+        AssertResult(result, Run((sub, left, right)));
+    }
+
+    [Fact]
+    public void SubMany()
+    {
+        var values = new[] { 1, 2, 3, 4, 5, 15, -3, -7, 0, 42 };
+        var program = values.Cast<object>().Prepend(sub).ToTuple(false);
+        AssertResult(values[0] + values.Skip(1).Select(item => - item).Sum(), Run(program));
+    }
+
+    [Theory]
+    [InlineData(42)]
+    [InlineData(42.5)]
+    [InlineData(-20)]
+    public void MulOne(object value)
+    {
+        AssertResult(value, Run((mul, value)));
+    }
+
+    [Theory]
+    [InlineData(1, 2, 2)]
+    [InlineData(1.5, 2, 3.0)]
+    [InlineData(-1, 2.5, -2.5)]
+    public void MulTwo(object left, object right, object result)
+    {
+        AssertResult(result, Run((mul, left, right)));
+    }
+
+    [Fact]
+    public void MulMany()
+    {
+        var values = new[] { 1, 2, 3, 4, 5, 15, -3, -7, 2, 42 };
+        var program = values.Cast<object>().Prepend(mul).ToTuple(false);
+        AssertResult(values.Aggregate((result, item) => result * item), Run(program));
+    }
+
+    [Theory]
+    [InlineData(42, 1/42)]
+    [InlineData(42.5, 1/42.5)]
+    [InlineData(-20, -1/20)]
+    public void DivOne(object value, object result)
+    {
+        AssertResult(result, Run((div, value)));
+    }
+
+    [Theory]
+    [InlineData(1, 2, 1/2)]
+    [InlineData(2, 1.5, 2/1.5)]
+    [InlineData(-1, 2.5, -1/2.5)]
+    public void DivTwo(object left, object right, object result)
+    {
+        AssertResult(result, Run((div, left, right)));
+    }
+
+    [Fact]
+    public void DivMany()
+    {
+        var values = new[] { 1, 2, 3, 4, 5, 15, -3, -7, 0.1, 42 };
+        var program = values.Cast<object>().Prepend(div).ToTuple(false);
+        AssertResult(values.Aggregate((result, item) => result / item), Run(program));
+    }
 
     private void AssertResult(object? expected, object? actual)
     {

@@ -23,10 +23,10 @@ public static class Elementary
     public const string or = "or";
     public const string not = "not";
 
-    public const string plus = "+";
-    public const string minus = "-";
-    public const string mul = "*";
-    public const string div = "/";
+    public static readonly Op add = new Add();
+    public static readonly Op sub = new Sub();
+    public static readonly Op mul = new Mul();
+    public static readonly Op div = new Div();
 
     public static ValueTuple<T> Single<T>(T value) => new(value);
 
