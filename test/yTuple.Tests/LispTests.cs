@@ -389,6 +389,35 @@ public class LispTests
             (cond, (flag, div), (!flag, sub)))));
     }
 
+    [Fact]
+    public void DefineValue()
+    {
+        var (x, y) = Declare("x", "y");
+        AssertResult(42, Run(((lambda, Single(x), (define, y, 1), (add, x, y)), 41)));
+    }
+
+    [Fact]
+    public void DefineExpression()
+    {
+        var (x, y) = Declare("x", "y");
+        AssertResult(42, Run(((lambda, Single(x), (define, y, (add, x, 1)), y), 41)));
+    }
+
+    [Fact]
+    public void DefineExpressionLambda()
+    {
+        var (x, y, inc) = Declare("x", "y", "inc");
+        AssertResult(
+            42, 
+            Run(
+                ((lambda, Single(x), 
+                    (define, inc, (lambda, Single(y), (add, y, 1))),
+                    (inc, x)), 
+                41)
+            ));
+
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

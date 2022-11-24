@@ -47,7 +47,7 @@ internal record Cond(): Symbol("cond");
 
 internal record Lambda(): Symbol("lambda");
 
-internal record Label(): Symbol("label");
+internal record Define(): Symbol("define");
 
 internal record Atom(): Op("atom", 1)
 {

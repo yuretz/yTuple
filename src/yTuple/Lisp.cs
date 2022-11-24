@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using static yTuple.Elementary;
@@ -29,7 +30,11 @@ public static class Lisp
         // cond
         ITuple tuple when Equals(tuple[0], cond) => ParseCond(tuple, scope),
 
+        // lambda
         ITuple tuple when Equals(tuple[0], lambda) => ParseLambda(tuple, scope),
+
+        //// define
+        //ITuple tuple when Equals(tuple[0], define) => ParseDefine(tuple, scope),
         
         // dynamic call
         ITuple tuple when tuple[0] is ITuple or Symbol => 
@@ -90,16 +95,39 @@ public static class Lisp
             .ToList()
             ?? throw new InvalidOperationException("Cannot read lambda arguments");
 
-        scope = new(args
-            .Select(item => new KeyValuePair<Symbol, Expression>(item.Key, item.Value))
-            .UnionBy(scope, item => item.Key));
+        var defines = items
+            .Skip(1)
+            .TakeWhile(item => item is ITuple tuple && tuple[0] is Define)
+            .Cast<ITuple>()
+            .Select(ParseDefine)
+            .ToList();
+
+        scope = new(
+             
+            defines
+                // defines (shadowing args)
+                .Select(item => new KeyValuePair<Symbol, Expression>(item.Symbol, item.Parameter))
+                // args (shadowing outer scope)
+                .Concat(args.Select(item => new KeyValuePair<Symbol, Expression>(item.Key, item.Value)))
+                // outer scope
+                .Concat(scope)   
+                .DistinctBy(item => item.Key));
 
         return Expression.Lambda(
-            Expression.Block(items.Skip(1).Select(item => ParseExpr(item, scope))),
+            Expression.Block(
+                defines.Select(item => item.Parameter),
+                defines.Select(item => Expression.Assign(item.Parameter, Expression.Convert(ParseExpr(item.Init, scope), typeof(object))))
+                    .Concat(items.Skip(1 + defines.Count).Select(item => ParseExpr(item, scope)))),
             args.Select(item => item.Value));
     }
 
-
+    private static (Symbol Symbol, object? Init, ParameterExpression Parameter) ParseDefine(ITuple tuple) => tuple switch
+    {
+        (Define, Symbol symbol) => (symbol, nil, Expression.Parameter(typeof(object), symbol.Name)),
+        (Define, Symbol symbol, var value) => (symbol, value, Expression.Parameter(typeof(object), symbol.Name)),
+        _ => throw new InvalidOperationException($"Invalid define {tuple}")
+    };
+    
     private static object? Apply(object? func, object?[] arguments) => func switch
     {
         Op op when op.Arity >= 0 => op.Run.DynamicInvoke(arguments),
