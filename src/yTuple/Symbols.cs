@@ -5,7 +5,7 @@ namespace yTuple;
 
 public abstract record Symbol(string Name)
 {
-    public override string ToString() => Name;
+    public sealed override string ToString() => Name;
 }
 
 internal record Var(string Name): Symbol(Name);
