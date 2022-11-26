@@ -14,22 +14,16 @@ public abstract record Op(string Name, int Arity): Symbol(Name)
 {
     public abstract Expression Parse(params Expression[] arguments);
 
-    public virtual Delegate Run 
+    public Delegate Run => _run ??= GetRun();
+
+    protected virtual Delegate GetRun()
     {
-        get 
-        {
-            if (_run is null)
-            {
-                var arguments = Enumerable
-                    .Range(0, Arity)
-                    .Select(_ => Expression.Parameter(typeof(object)))
-                    .ToArray();
+        var arguments = Enumerable
+            .Range(0, Arity)
+            .Select(_ => Expression.Parameter(typeof(object)))
+            .ToArray();
 
-                _run = Expression.Lambda(Parse(arguments), arguments).Compile();
-            }
-
-            return _run;
-        }
+        return Expression.Lambda(Parse(arguments), arguments).Compile();
     }
 
     protected static MethodInfo GetMethod(LambdaExpression lambda)
@@ -105,50 +99,42 @@ internal record Eq() : Op("eq", 2)
 
 internal abstract record NumericOp(string Name, ConstantExpression Identity, ExpressionType Type) : Op(Name, -1)
 {
-    public override Delegate Run
-    {
-        get
-        {
-            if (_run is null)
-            {
-                _typed = new[]
-                {
-                    typeof(decimal),
-                    typeof(double),
-                    typeof(float),
-                    typeof(ulong),
-                    typeof(long),
-                    typeof(uint),
-                    typeof(int)
-                }.ToDictionary(
-                    type => type,
-                    type =>
-                    {
-                        var item = Expression.Parameter(typeof(object));
-                        var result = Expression.Parameter(typeof(object));
-                        return Expression.Lambda<Func<object, object, object>>(
-                            Expression.Convert(
-                                Expression.MakeBinary(Type, Expression.Convert(result, type), Expression.Convert(item, type)),
-                                typeof(object)),
-                            result,
-                            item).Compile();
-                    });
-
-                _run = (object[] args) =>
-                    args.Length > 1  
-                        ? args.Aggregate(
-                            (result, item) => _typed[PromoteNumeric(result.GetType(), item.GetType())](result, item))
-                        : _typed[PromoteNumeric(Identity.GetType(), args[0].GetType())](Identity, args[0]); 
-            }
-
-            return _run;
-        }
-    }
-
     public override Expression Parse(params Expression[] arguments) => 
         arguments.Length > 1 
             ? arguments.Aggregate(MakeBinary) 
             : MakeBinary(Identity, arguments[0]);
+
+    protected override Delegate GetRun()
+    {
+        _typed ??= new[]
+        {
+            typeof(decimal),
+            typeof(double),
+            typeof(float),
+            typeof(ulong),
+            typeof(long),
+            typeof(uint),
+            typeof(int)
+        }.ToDictionary(
+            type => type,
+            type =>
+            {
+                var item = Expression.Parameter(typeof(object));
+                var result = Expression.Parameter(typeof(object));
+                return Expression.Lambda<Func<object, object, object>>(
+                    Expression.Convert(
+                        Expression.MakeBinary(Type, Expression.Convert(result, type), Expression.Convert(item, type)),
+                        typeof(object)),
+                    result,
+                    item).Compile();
+            });
+
+        return (object[] args) =>
+            args.Length > 1
+                ? args.Aggregate(
+                    (result, item) => _typed[PromoteNumeric(result.GetType(), item.GetType())](result, item))
+                : _typed[PromoteNumeric(Identity.GetType(), args[0].GetType())](Identity, args[0]);
+    }
 
     private Expression MakeBinary(Expression left, Expression right)
     {
@@ -194,7 +180,6 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
         }
     }
 
-    private Delegate? _run;
     private Dictionary<Type, Func<object, object, object>>? _typed;
 }
 
