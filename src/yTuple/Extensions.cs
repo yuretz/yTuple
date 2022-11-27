@@ -4,8 +4,6 @@ namespace yTuple;
 
 public static class Extensions
 {
-    public static readonly IEnumerable<object?> Empty = Enumerable.Empty<object?>();
-
     public static IEnumerable<object?> ToEnumerable(this ITuple tuple, bool recurse)
     {
         ArgumentNullException.ThrowIfNull(tuple);
@@ -14,7 +12,7 @@ public static class Extensions
         {
             yield return tuple[i] switch
             {
-                ITuple { Length: 0 } when recurse => Empty,
+                ITuple { Length: 0 } when recurse => Types.Empty,
                 ITuple nested when recurse => nested.ToEnumerable(recurse),
                 _ => tuple[i]
             };

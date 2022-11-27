@@ -5,7 +5,7 @@ public class ExtensionsTests
     [Fact]
     public void Empty()
     {
-        Assert.Empty(Extensions.Empty);
+        Assert.Empty(Types.Empty);
     }
 
     [Theory]
@@ -13,7 +13,7 @@ public class ExtensionsTests
     [InlineData(true)]
     public void ToFromEmpty(bool recurse)
     {
-        Assert.Equal(default(ValueTuple), Extensions.Empty.ToTuple(recurse));
+        Assert.Equal(default(ValueTuple), Types.Empty.ToTuple(recurse));
         Assert.Empty(default(ValueTuple).ToEnumerable(recurse));
     }
 
