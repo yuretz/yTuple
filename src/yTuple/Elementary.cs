@@ -19,9 +19,9 @@ public static class Elementary
     public static readonly Op cons = new Cons();
 
     public static readonly Op eq = new Eq();
-    public const string and = "and";
-    public const string or = "or";
-    public const string not = "not";
+    public static readonly Op and = new And();
+    public static readonly Op or = new Or();
+    public static readonly Op not = new Not();
 
     public static readonly Op add = new Add();
     public static readonly Op sub = new Sub();

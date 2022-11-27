@@ -418,6 +418,62 @@ public class LispTests
 
     }
 
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(42, false)]
+    [InlineData(null, true)]
+    public void NotValue(object value, bool result)
+    {
+        value ??= nil;
+        AssertResult(result, Run((not, value)));
+    }
+
+
+    [Fact]
+    public void AndNoArgs()
+    {
+        AssertResult(true, Run(Single(and)));
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    [InlineData(42, true)]
+    [InlineData(null, false)]
+    public void AndOne(object? value, bool result)
+    {
+        value ??= nil;
+
+        AssertResult(result, Run((and, value)));
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, false)]
+    [InlineData(true, true, true)]
+    [InlineData(1, 2, true)]
+    [InlineData(1, null, false)]
+    public void AndTwo(object? left, object? right, bool result)
+    {
+        left ??= nil;
+        right ??= nil;
+        AssertResult(result, Run((and, left, right)));
+    }
+
+    [Theory]
+    [InlineData(new object[] {1, 2, 3, 4, 5}, true)]
+    [InlineData(new object?[] { true, true, false, true, true }, false)]
+    [InlineData(new object?[] { true, true, true, true }, true)]
+    [InlineData(new object?[] { 1, 2, null }, false)]
+    public void AndMany(object?[] args, bool result)
+    {
+        var program = args.Select(item => item ?? nil).Prepend(and).ToTuple(false);
+
+        AssertResult(result, Run(program));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

@@ -106,7 +106,7 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
 
     protected override Delegate GetRun()
     {
-        _typed ??= Types.Numeric
+        var typed = Types.Numeric
             .ToDictionary(
                 type => type,
                 type =>
@@ -124,8 +124,8 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
         return (object[] args) =>
             args.Length > 1
                 ? args.Aggregate(
-                    (result, item) => _typed[Types.PromoteNumeric(result.GetType(), item.GetType())](result, item))
-                : _typed[Types.PromoteNumeric(Identity.GetType(), args[0].GetType())](Identity, args[0]);
+                    (result, item) => typed[Types.PromoteNumeric(result.GetType(), item.GetType())](result, item))
+                : typed[Types.PromoteNumeric(Identity.GetType(), args[0].GetType())](Identity.Value!, args[0]);
     }
 
     private Expression MakeBinary(Expression left, Expression right)
@@ -135,11 +135,58 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
         right = right.Type == type ? right : Expression.Convert(right, type);
         return Expression.MakeBinary(Type, left, right);
     }
-
-    private Dictionary<Type, Func<object, object, object>>? _typed;
 }
 
 internal record Add(): NumericOp("+", Expression.Constant(0), ExpressionType.Add);
 internal record Sub(): NumericOp("-", Expression.Constant(0), ExpressionType.Subtract);
 internal record Mul(): NumericOp("*", Expression.Constant(1), ExpressionType.Multiply);
 internal record Div(): NumericOp("/", Expression.Constant(1), ExpressionType.Divide);
+
+internal record LogicalBinaryOp(string Name, ConstantExpression Identity, ExpressionType Type) : Op(Name, -1)
+{
+    public override Expression Parse(params Expression[] arguments) => arguments.Length switch
+    {
+        0 => Identity,
+        1 => MakeBinary(Identity, arguments[0]),
+        _ => arguments.Aggregate(MakeBinary)
+    };
+
+    protected override Delegate GetRun()
+    {
+        var left = Expression.Parameter(typeof(object));
+        var right = Expression.Parameter(typeof(object));
+        var binary = Expression.Lambda<Func<object?, object?, object>>(
+            Expression.Convert(
+                Expression.MakeBinary(
+                    Type,
+                    Expression.Call(_isTrue, left),
+                    Expression.Call(_isTrue, right)),
+                typeof(object))).Compile();
+
+        return (object?[] arguments) => arguments.Length switch
+        {
+            0 => Identity.Value,
+            1 => binary(Identity.Value, arguments[0]),
+            _ => arguments.Aggregate(binary)
+        };
+    }
+
+    private Expression MakeBinary(Expression left, Expression right) =>
+        Expression.MakeBinary(
+            Type, 
+            left.Type == typeof(bool) ? left : Expression.Call(_isTrue, Expression.Convert(left, typeof(object))), 
+            right.Type == typeof(bool) ? right : Expression.Call(_isTrue, Expression.Convert(right, typeof(object))));
+
+    private static readonly MethodInfo _isTrue = GetMethod((object item) => Types.IsTrue(item));
+}
+
+internal record And(): LogicalBinaryOp("and", Expression.Constant(true), ExpressionType.And);
+internal record Or(): LogicalBinaryOp("or", Expression.Constant(false), ExpressionType.Or);
+
+internal record Not() : Op("not", 1)
+{
+    public override Expression Parse(params Expression[] arguments) => 
+        Expression.Call(_isFalse, Expression.Convert(arguments[0], typeof(object)));
+
+    private static readonly MethodInfo _isFalse = GetMethod((object item) => Types.IsFalse(item));
+}
