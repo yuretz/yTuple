@@ -315,7 +315,7 @@ public class LispTests
     {
         var values = new[] { 1, 2, 3, 4, 5, 15, -3, -7, 0, 42 };
         var program = values.Cast<object>().Prepend(sub).ToTuple(false);
-        AssertResult(values[0] + values.Skip(1).Select(item => - item).Sum(), Run(program));
+        AssertResult(values[0] + values.Skip(1).Select(item => -item).Sum(), Run(program));
     }
 
     [Theory]
@@ -345,18 +345,18 @@ public class LispTests
     }
 
     [Theory]
-    [InlineData(42, 1/42)]
-    [InlineData(42.5, 1/42.5)]
-    [InlineData(-20, -1/20)]
+    [InlineData(42, 1 / 42)]
+    [InlineData(42.5, 1 / 42.5)]
+    [InlineData(-20, -1 / 20)]
     public void DivOne(object value, object result)
     {
         AssertResult(result, Run((div, value)));
     }
 
     [Theory]
-    [InlineData(1, 2, 1/2)]
-    [InlineData(2, 1.5, 2/1.5)]
-    [InlineData(-1, 2.5, -1/2.5)]
+    [InlineData(1, 2, 1 / 2)]
+    [InlineData(2, 1.5, 2 / 1.5)]
+    [InlineData(-1, 2.5, -1 / 2.5)]
     public void DivTwo(object left, object right, object result)
     {
         AssertResult(result, Run((div, left, right)));
@@ -385,7 +385,7 @@ public class LispTests
     {
         var x = Declare("x");
         AssertResult(result, Run(
-            ((lambda, Single(x), (x, 9, 3)), 
+            ((lambda, Single(x), (x, 9, 3)),
             (cond, (flag, div), (!flag, sub)))));
     }
 
@@ -408,11 +408,11 @@ public class LispTests
     {
         var (x, y, inc) = Declare("x", "y", "inc");
         AssertResult(
-            42, 
+            42,
             Run(
-                ((lambda, Single(x), 
+                ((lambda, Single(x),
                     (define, inc, (lambda, Single(y), (add, y, 1))),
-                    (inc, x)), 
+                    (inc, x)),
                 41)
             ));
 
@@ -442,7 +442,7 @@ public class LispTests
     [InlineData(new object?[] { true, true }, true)]
     [InlineData(new object?[] { 1, 2 }, true)]
     [InlineData(new object?[] { 1, null }, false)]
-    [InlineData(new object?[] {1, 2, 3, 4, 5}, true)]
+    [InlineData(new object?[] { 1, 2, 3, 4, 5 }, true)]
     [InlineData(new object?[] { true, true, false, true, true }, false)]
     [InlineData(new object?[] { false, false, false, false }, false)]
     [InlineData(new object?[] { true, true, true, true }, true)]
@@ -484,6 +484,25 @@ public class LispTests
     public void AndOrOrDynamic(bool flag, bool result)
     {
         AssertResult(result, Run(((cond, (flag, and), (!flag, or)), true, false, true)));
+    }
+
+    [Theory]
+    [InlineData(10, 55)]
+    //[InlineData(1000, 500500)]
+    //[InlineData(10000, 50005000)]
+    public void SimpleRecursion(int value, int result)
+    {
+        var (x, y, sum) = Declare("x", "y", "sum");
+
+        AssertResult(result, Run(
+            ((lambda, Single(y),
+                (define, sum,
+                    (lambda, Single(x), 
+                        (cond, ((eq, x, 0), 0), 
+                            (true, (add, x, (sum, (sub, x, 1))))))),
+                (sum, y)), 
+             value)
+        ));
     }
 
     private void AssertResult(object? expected, object? actual)
