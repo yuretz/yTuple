@@ -161,7 +161,10 @@ internal record LogicalBinaryOp(string Name, ConstantExpression Identity, Expres
                     Type,
                     Expression.Call(_isTrue, left),
                     Expression.Call(_isTrue, right)),
-                typeof(object))).Compile();
+                typeof(object)),
+            left,
+            right
+            ).Compile();
 
         return (object?[] arguments) => arguments.Length switch
         {

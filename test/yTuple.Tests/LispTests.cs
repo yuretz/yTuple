@@ -430,48 +430,60 @@ public class LispTests
     }
 
 
-    [Fact]
-    public void AndNoArgs()
-    {
-        AssertResult(true, Run(Single(and)));
-    }
-
     [Theory]
-    [InlineData(false, false)]
-    [InlineData(true, true)]
-    [InlineData(42, true)]
-    [InlineData(null, false)]
-    public void AndOne(object? value, bool result)
-    {
-        value ??= nil;
-
-        AssertResult(result, Run((and, value)));
-    }
-
-    [Theory]
-    [InlineData(false, false, false)]
-    [InlineData(false, true, false)]
-    [InlineData(true, false, false)]
-    [InlineData(true, true, true)]
-    [InlineData(1, 2, true)]
-    [InlineData(1, null, false)]
-    public void AndTwo(object? left, object? right, bool result)
-    {
-        left ??= nil;
-        right ??= nil;
-        AssertResult(result, Run((and, left, right)));
-    }
-
-    [Theory]
-    [InlineData(new object[] {1, 2, 3, 4, 5}, true)]
+    [InlineData(new object?[] { }, true)]
+    [InlineData(new object?[] { false }, false)]
+    [InlineData(new object?[] { true }, true)]
+    [InlineData(new object?[] { 42 }, true)]
+    [InlineData(new object?[] { null }, false)]
+    [InlineData(new object?[] { false, false }, false)]
+    [InlineData(new object?[] { false, true }, false)]
+    [InlineData(new object?[] { true, false }, false)]
+    [InlineData(new object?[] { true, true }, true)]
+    [InlineData(new object?[] { 1, 2 }, true)]
+    [InlineData(new object?[] { 1, null }, false)]
+    [InlineData(new object?[] {1, 2, 3, 4, 5}, true)]
     [InlineData(new object?[] { true, true, false, true, true }, false)]
+    [InlineData(new object?[] { false, false, false, false }, false)]
     [InlineData(new object?[] { true, true, true, true }, true)]
     [InlineData(new object?[] { 1, 2, null }, false)]
-    public void AndMany(object?[] args, bool result)
+    public void And(object?[] args, bool result)
     {
         var program = args.Select(item => item ?? nil).Prepend(and).ToTuple(false);
 
         AssertResult(result, Run(program));
+    }
+
+    [Theory]
+    [InlineData(new object?[] { }, false)]
+    [InlineData(new object?[] { false }, false)]
+    [InlineData(new object?[] { true }, true)]
+    [InlineData(new object?[] { 42 }, true)]
+    [InlineData(new object?[] { null }, false)]
+    [InlineData(new object?[] { false, false }, false)]
+    [InlineData(new object?[] { false, true }, true)]
+    [InlineData(new object?[] { true, false }, true)]
+    [InlineData(new object?[] { true, true }, true)]
+    [InlineData(new object?[] { 1, 2 }, true)]
+    [InlineData(new object?[] { 1, null }, true)]
+    [InlineData(new object?[] { 1, 2, 3, 4, 5 }, true)]
+    [InlineData(new object?[] { true, true, false, true, true }, true)]
+    [InlineData(new object?[] { false, false, false, false }, false)]
+    [InlineData(new object?[] { true, true, true, true }, true)]
+    [InlineData(new object?[] { 1, 2, null }, true)]
+    public void Or(object?[] args, bool result)
+    {
+        var program = args.Select(item => item ?? nil).Prepend(or).ToTuple(false);
+
+        AssertResult(result, Run(program));
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void AndOrOrDynamic(bool flag, bool result)
+    {
+        AssertResult(result, Run(((cond, (flag, and), (!flag, or)), true, false, true)));
     }
 
     private void AssertResult(object? expected, object? actual)
