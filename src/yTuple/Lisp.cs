@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using static yTuple.Elementary;
@@ -37,17 +36,18 @@ public static class Lisp
         //ITuple tuple when Equals(tuple[0], define) => ParseDefine(tuple, scope),
         
         // dynamic call
-        ITuple tuple when tuple[0] is ITuple or Symbol => 
-            Expression.Call(
-                _apply,
-                ParseExpr(tuple[0], scope),
+        ITuple tuple when tuple[0] is ITuple or Symbol =>
+            Expression.Invoke(
+                Expression.Convert(ParseExpr(tuple[0], scope), typeof(Func<object[], object>)),
                 Expression.NewArrayInit(
                     typeof(object),
-                    Enumerable.Range(1, tuple.Length - 1)
-                        .Select(index => Expression.Convert(ParseExpr(tuple[index], scope), typeof(object)))
-                        .ToArray())),
+                    tuple.ToEnumerable(false)
+                        .Skip(1)
+                        .Select(item => Expression.Convert(ParseExpr(item, scope), typeof(object))))),
 
         ITuple tuple => throw new NotImplementedException($"Unknown function {tuple[0]}"),
+
+        Op operation => Expression.Constant(operation.Run),
 
         Symbol symbol => scope.TryGetValue(symbol, out var result) 
             ? result 
@@ -85,7 +85,7 @@ public static class Lisp
     private static Expression ParseLambda(ITuple tuple, Dictionary<Symbol, Expression> scope)
     {
         var items = tuple.ToEnumerable(false).Skip(1).ToList();
-        var args = ((ITuple?)items
+        var namedArgs = ((ITuple?)items
             .FirstOrDefault())
             ?.ToEnumerable(false)
             .Cast<Symbol>()
@@ -94,6 +94,8 @@ public static class Lisp
                 Expression.Parameter(typeof(object), item.Name)))
             .ToList()
             ?? throw new InvalidOperationException("Cannot read lambda arguments");
+
+        var args = Expression.Parameter(typeof(object[]), "args");
 
         var defines = items
             .Skip(1)
@@ -108,17 +110,32 @@ public static class Lisp
                 // defines (shadowing args)
                 .Select(item => new KeyValuePair<Symbol, Expression>(item.Symbol, item.Parameter))
                 // args (shadowing outer scope)
-                .Concat(args.Select(item => new KeyValuePair<Symbol, Expression>(item.Key, item.Value)))
+                .Concat(namedArgs.Select(item => new KeyValuePair<Symbol, Expression>(item.Key, item.Value)))
                 // outer scope
                 .Concat(scope)   
                 .DistinctBy(item => item.Key));
 
         return Expression.Lambda(
-            Expression.Block(
-                defines.Select(item => item.Parameter),
-                defines.Select(item => Expression.Assign(item.Parameter, Expression.Convert(ParseExpr(item.Init, scope), typeof(object))))
-                    .Concat(items.Skip(1 + defines.Count).Select(item => ParseExpr(item, scope)))),
-            args.Select(item => item.Value));
+            Expression.Convert(
+                Expression.Block(
+                    // args + defines become block variables
+                    namedArgs.Select(item => item.Value).Concat(defines.Select(item => item.Parameter)),
+                    
+                    namedArgs
+                        // assign args
+                        .Select((item, index) => Expression.Assign(
+                            item.Value, 
+                            Expression.ArrayAccess(args, Expression.Constant(index))))
+                        // assign defines
+                        .Concat(defines.Select(
+                            item => Expression.Assign(
+                                item.Parameter, 
+                                Expression.Convert(ParseExpr(item.Init, scope), typeof(object)))))
+                        // run the rest
+                        .Concat(items.Skip(1 + defines.Count).Select(item => ParseExpr(item, scope)))),
+            typeof(object)),
+
+            args);
     }
 
     private static (Symbol Symbol, object? Init, ParameterExpression Parameter) ParseDefine(ITuple tuple) => tuple switch

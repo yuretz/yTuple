@@ -16,14 +16,21 @@ public abstract record Op(string Name, int Arity): Symbol(Name)
 
     public Delegate Run => _run ??= GetRun();
 
-    protected virtual Delegate GetRun()
+    protected virtual Func<object?[], object?> GetRun()
     {
-        var arguments = Enumerable
+        var args = Expression.Parameter(typeof(object?[]), "args");
+        
+        var argVars = Enumerable
             .Range(0, Arity)
             .Select(_ => Expression.Parameter(typeof(object)))
             .ToArray();
 
-        return Expression.Lambda(Parse(arguments), arguments).Compile();
+        return Expression.Lambda<Func<object?[], object?>>(
+            Expression.Block(
+                argVars,
+                argVars.Select((item, index) => Expression.Assign(item, Expression.ArrayAccess(args, Expression.Constant(index))))
+                    .Append(Parse(argVars))),
+            args).Compile();
     }
 
     protected static MethodInfo GetMethod(LambdaExpression lambda)
@@ -46,7 +53,7 @@ internal record Define(): Symbol("define");
 internal record Atom(): Op("atom", 1)
 {
     public override Expression Parse(params Expression[] arguments) => 
-        Expression.Not(Expression.TypeIs(arguments[0], typeof(IEnumerable<object>)));
+        Expression.Not(Expression.TypeIs(arguments[0], typeof(IEnumerable<object?>)));
 }
 
 internal record Car() : Op("car", 1)
@@ -54,7 +61,7 @@ internal record Car() : Op("car", 1)
     public override Expression Parse(params Expression[] arguments) =>
         Expression.Call(
                 _first,
-                Expression.Convert(arguments[0], typeof(IEnumerable<object>)),
+                Expression.Convert(arguments[0], typeof(IEnumerable<object?>)),
                 Expression.Constant(Lisp.NilResult));
 
     private static readonly MethodInfo _first = 
@@ -66,7 +73,7 @@ internal record Cdr() : Op("cdr", 1)
     public override Expression Parse(params Expression[] arguments) =>
         Expression.Call(
                     _skip,
-                    Expression.Convert(arguments[0], typeof(IEnumerable<object>)),
+                    Expression.Convert(arguments[0], typeof(IEnumerable<object?>)),
                     Expression.Constant(1));
 
     private static readonly MethodInfo _skip =
@@ -78,7 +85,7 @@ internal record Cons() : Op("cons", 2)
     public override Expression Parse(params Expression[] arguments) =>
         Expression.Call(
             _prepend,
-            Expression.Convert(arguments[1], typeof(IEnumerable<object>)),
+            Expression.Convert(arguments[1], typeof(IEnumerable<object?>)),
             Expression.Convert(arguments[0], typeof(object)));
 
     private static readonly MethodInfo _prepend =
@@ -104,7 +111,7 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
             ? arguments.Aggregate(MakeBinary) 
             : MakeBinary(Identity, arguments[0]);
 
-    protected override Delegate GetRun()
+    protected override Func<object?[], object?> GetRun()
     {
         var typed = Types.Numeric
             .ToDictionary(
@@ -121,11 +128,13 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
                         item).Compile();
                 });
 
-        return (object[] args) =>
-            args.Length > 1
-                ? args.Aggregate(
-                    (result, item) => typed[Types.PromoteNumeric(result.GetType(), item.GetType())](result, item))
-                : typed[Types.PromoteNumeric(Identity.GetType(), args[0].GetType())](Identity.Value!, args[0]);
+        var binary = (object? left, object? right) =>
+            typed[
+                Types.PromoteNumeric(
+                left?.GetType() ?? throw new ArgumentNullException(),
+                right?.GetType() ?? throw new ArgumentNullException())](left, right);
+
+        return (object?[] args) => args.Length > 1 ? args.Aggregate(binary) : binary(Identity, args[0]);
     }
 
     private Expression MakeBinary(Expression left, Expression right)
@@ -151,7 +160,7 @@ internal record LogicalBinaryOp(string Name, ConstantExpression Identity, Expres
         _ => arguments.Aggregate(MakeBinary)
     };
 
-    protected override Delegate GetRun()
+    protected override Func<object?[], object?> GetRun()
     {
         var left = Expression.Parameter(typeof(object));
         var right = Expression.Parameter(typeof(object));

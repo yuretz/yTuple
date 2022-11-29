@@ -488,8 +488,7 @@ public class LispTests
 
     [Theory]
     [InlineData(10, 55)]
-    //[InlineData(1000, 500500)]
-    //[InlineData(10000, 50005000)]
+    [InlineData(1000, 500500)]
     public void SimpleRecursion(int value, int result)
     {
         var (x, y, sum) = Declare("x", "y", "sum");
