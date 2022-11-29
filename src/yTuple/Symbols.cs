@@ -124,6 +124,7 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
                         Expression.Convert(
                             Expression.MakeBinary(Type, Expression.Convert(result, type), Expression.Convert(item, type)),
                             typeof(object)),
+                        true,
                         result,
                         item).Compile();
                 });
@@ -171,6 +172,7 @@ internal record LogicalBinaryOp(string Name, ConstantExpression Identity, Expres
                     Expression.Call(_isTrue, left),
                     Expression.Call(_isTrue, right)),
                 typeof(object)),
+            true,
             left,
             right
             ).Compile();

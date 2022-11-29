@@ -496,11 +496,49 @@ public class LispTests
         AssertResult(result, Run(
             ((lambda, Single(y),
                 (define, sum,
-                    (lambda, Single(x), 
-                        (cond, ((eq, x, 0), 0), 
+                    (lambda, Single(x),
+                        (cond, ((eq, x, 0), 0),
                             (true, (add, x, (sum, (sub, x, 1))))))),
-                (sum, y)), 
+                (sum, y)),
              value)
+        ));
+    }
+
+    [Theory]
+    [InlineData(10, 55)]
+    public void TailRecursion1(int value, int result)
+    {
+        var (n, i, curr, prev, fib) = Declare("n", "i", "curr", "prev", "fib");
+        AssertResult(result, Run(
+            ((lambda, Single(n),
+                (define, fib,
+                    (lambda, (i, curr, prev),
+                        (cond, 
+                            ((eq, i, 0), curr), 
+                            ((eq, i, 1), curr), 
+                            (true, (fib, (sub, i, 1), (add, curr, prev), curr))))),
+                (fib, n, 1, 0)),
+            value)
+        ));
+    }
+
+    [Theory]
+    [InlineData(10)]
+    [InlineData(1000)]
+    //[InlineData(1000000)]
+    public void TailRecursion2(int value)
+    {
+        var (x, y, i, count) = Declare("x", "y", "i", "count");
+
+        AssertResult(value, Run(
+            ((lambda, Single(y),
+                (define, count,
+                    (lambda, (x, i),
+                        (cond, 
+                            ((eq, i, 0), x),
+                            (true, (count, (add, x, 1), (sub, i, 1)))))),
+                (count, 0, y)),
+            value)
         ));
     }
 

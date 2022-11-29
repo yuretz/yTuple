@@ -8,7 +8,7 @@ namespace yTuple;
 public static class Lisp
 {
     public static Expression<Func<object?>> Parse(ITuple program) => 
-        Expression.Lambda<Func<object?>>(Expression.Convert(ParseExpr(program, new()), typeof(object)));
+        Expression.Lambda<Func<object?>>(Expression.Convert(ParseExpr(program, new()), typeof(object)), true);
 
     internal static readonly IEnumerable<object?> NilResult = Types.Empty;
 
@@ -134,7 +134,7 @@ public static class Lisp
                         // run the rest
                         .Concat(items.Skip(1 + defines.Count).Select(item => ParseExpr(item, scope)))),
             typeof(object)),
-
+            true,
             args);
     }
 
@@ -145,18 +145,6 @@ public static class Lisp
         _ => throw new InvalidOperationException($"Invalid define {tuple}")
     };
     
-    private static object? Apply(object? func, object?[] arguments) => func switch
-    {
-        Op op when op.Arity >= 0 => op.Run.DynamicInvoke(arguments),
-        Op op when op.Arity < 0 => op.Run.DynamicInvoke(new[] { arguments }),
-        Delegate dlg => dlg.DynamicInvoke(arguments),
-        Symbol sym => throw new NotSupportedException($"{sym.Name} cannot be called dynamically"),
-        _ => throw new NotImplementedException($"{func} is not a function")
-    };
-    
     private static readonly MethodInfo _isTrue = typeof(Types)
         .GetMethod(nameof(Types.IsTrue), BindingFlags.Static | BindingFlags.Public)!;
-
-    private static readonly MethodInfo _apply = typeof(Lisp)
-        .GetMethod(nameof(Apply), BindingFlags.Static | BindingFlags.NonPublic)!;
 }
