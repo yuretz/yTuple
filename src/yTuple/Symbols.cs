@@ -166,12 +166,11 @@ internal record LogicalBinaryOp(string Name, ConstantExpression Identity, Expres
         var left = Expression.Parameter(typeof(object));
         var right = Expression.Parameter(typeof(object));
         var binary = Expression.Lambda<Func<object?, object?, object>>(
-            Expression.Convert(
+            Types.BoxExpr(
                 Expression.MakeBinary(
                     Type,
                     Expression.Call(_isTrue, left),
-                    Expression.Call(_isTrue, right)),
-                typeof(object)),
+                    Expression.Call(_isTrue, right))),
             true,
             left,
             right
@@ -188,8 +187,8 @@ internal record LogicalBinaryOp(string Name, ConstantExpression Identity, Expres
     private Expression MakeBinary(Expression left, Expression right) =>
         Expression.MakeBinary(
             Type, 
-            left.Type == typeof(bool) ? left : Expression.Call(_isTrue, Expression.Convert(left, typeof(object))), 
-            right.Type == typeof(bool) ? right : Expression.Call(_isTrue, Expression.Convert(right, typeof(object))));
+            left.Type == typeof(bool) ? left : Expression.Call(_isTrue, Types.BoxExpr(left)), 
+            right.Type == typeof(bool) ? right : Expression.Call(_isTrue, Types.BoxExpr(right)));
 
     private static readonly MethodInfo _isTrue = GetMethod((object item) => Types.IsTrue(item));
 }

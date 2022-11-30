@@ -1,4 +1,6 @@
-﻿namespace yTuple;
+﻿using System.Linq.Expressions;
+
+namespace yTuple;
 
 internal static class Types
 {
@@ -53,4 +55,12 @@ internal static class Types
     public static bool IsFalse(object? value) => value is bool flag && !flag || value == Empty;
 
     public static bool IsTrue(object? value) => !IsFalse(value);
+
+    public static Expression BoxExpr(Expression expression) => expression.Type.IsValueType
+        ? Expression.Convert(expression, typeof(object))
+        : expression;
+
+    public static Expression CoerceExpr<T>(Expression expression) => expression.Type != typeof(T)
+        ? Expression.Convert(expression, typeof(T))
+        : expression;
 }

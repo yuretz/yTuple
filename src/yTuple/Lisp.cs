@@ -8,7 +8,7 @@ namespace yTuple;
 public static class Lisp
 {
     public static Expression<Func<object?>> Parse(ITuple program) => 
-        Expression.Lambda<Func<object?>>(Expression.Convert(ParseExpr(program, new()), typeof(object)), true);
+        Expression.Lambda<Func<object?>>(Types.BoxExpr(ParseExpr(program, new())), true);
 
     internal static readonly IEnumerable<object?> NilResult = Types.Empty;
 
@@ -38,12 +38,12 @@ public static class Lisp
         // dynamic call
         ITuple tuple when tuple[0] is ITuple or Symbol =>
             Expression.Invoke(
-                Expression.Convert(ParseExpr(tuple[0], scope), typeof(Func<object[], object>)),
+                Types.CoerceExpr<Func<object[], object>>(ParseExpr(tuple[0], scope)),
                 Expression.NewArrayInit(
                     typeof(object),
                     tuple.ToEnumerable(false)
                         .Skip(1)
-                        .Select(item => Expression.Convert(ParseExpr(item, scope), typeof(object))))),
+                        .Select(item => Types.BoxExpr(ParseExpr(item, scope))))),
 
         ITuple tuple => throw new NotImplementedException($"Unknown function {tuple[0]}"),
 
@@ -62,7 +62,7 @@ public static class Lisp
         return Expression.Block(
             new[] { checkResult },
             tuple.ToEnumerable(false).Skip(1).Cast<ITuple>().Reverse().Aggregate(
-                (Expression)Expression.Convert(ParseExpr(NilResult, scope), typeof(object)),
+                Types.BoxExpr(ParseExpr(NilResult, scope)),
                 (result, item) => ParseCondClause(result, item, checkResult, scope)));
     }
 
@@ -77,9 +77,9 @@ public static class Lisp
             _isTrue, 
             Expression.Assign(
                 checkResult, 
-                Expression.Convert(items.FirstOrDefault(ParseExpr(NilResult, scope)), typeof(object))));
-        var rest = Expression.Convert(Expression.Block(items.Skip(1).Prepend(checkResult)), typeof(object));
-        return Expression.Condition(check, rest, otherwise);
+                Types.BoxExpr(items.FirstOrDefault(ParseExpr(NilResult, scope)))));
+        var rest = Types.CoerceExpr<object>(Expression.Block(items.Skip(1).Prepend(checkResult)));
+        return Expression.Condition(check, rest, Types.CoerceExpr<object>(otherwise));
     }
 
     private static Expression ParseLambda(ITuple tuple, Dictionary<Symbol, Expression> scope)
@@ -116,7 +116,7 @@ public static class Lisp
                 .DistinctBy(item => item.Key));
 
         return Expression.Lambda(
-            Expression.Convert(
+            Types.BoxExpr(
                 Expression.Block(
                     // args + defines become block variables
                     namedArgs.Select(item => item.Value).Concat(defines.Select(item => item.Parameter)),
@@ -130,10 +130,9 @@ public static class Lisp
                         .Concat(defines.Select(
                             item => Expression.Assign(
                                 item.Parameter, 
-                                Expression.Convert(ParseExpr(item.Init, scope), typeof(object)))))
+                                Types.BoxExpr(ParseExpr(item.Init, scope)))))
                         // run the rest
-                        .Concat(items.Skip(1 + defines.Count).Select(item => ParseExpr(item, scope)))),
-            typeof(object)),
+                        .Concat(items.Skip(1 + defines.Count).Select(item => ParseExpr(item, scope))))),
             true,
             args);
     }
@@ -144,7 +143,8 @@ public static class Lisp
         (Define, Symbol symbol, var value) => (symbol, value, Expression.Parameter(typeof(object), symbol.Name)),
         _ => throw new InvalidOperationException($"Invalid define {tuple}")
     };
-    
+
+
     private static readonly MethodInfo _isTrue = typeof(Types)
         .GetMethod(nameof(Types.IsTrue), BindingFlags.Static | BindingFlags.Public)!;
 }
