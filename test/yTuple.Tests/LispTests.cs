@@ -206,13 +206,13 @@ public class LispTests
     [InlineData("foo", "yes")]
     public void CondTruthyTests(object value, string result)
     {
-        AssertResult(result, Run((cond, (value, "yes"), (true, "no"))));
+        AssertResult(result, Run((cond, (value, "yes"), (@else, "no"))));
     }
 
     [Fact]
     public void CondNilTest1()
     {
-        AssertResult("no", Run((cond, (nil, "yes"), (true, "no"))));
+        AssertResult("no", Run((cond, (nil, "yes"), (@else, "no"))));
     }
 
     [Fact]
@@ -224,7 +224,7 @@ public class LispTests
     [Fact]
     public void DynamicCall2()
     {
-        AssertResult((2, 3), Run(((cond, ((eq, 42, 43), car), (true, cdr)), (quote, (1, 2, 3)))));
+        AssertResult((2, 3), Run(((cond, ((eq, 42, 43), car), (@else, cdr)), (quote, (1, 2, 3)))));
     }
 
     [Theory]
@@ -262,7 +262,7 @@ public class LispTests
             ((lambda, (x, y),
                 (cond,
                     ((eq, x, y), "yes"),
-                    (true, "no"))),
+                    (@else, "no"))),
             left, right)));
     }
 
@@ -498,7 +498,7 @@ public class LispTests
                 (define, sum,
                     (lambda, Single(x),
                         (cond, ((eq, x, 0), 0),
-                            (true, (add, x, (sum, (sub, x, 1))))))),
+                            (@else, (add, x, (sum, (sub, x, 1))))))),
                 (sum, y)),
              value)
         ));
@@ -516,7 +516,7 @@ public class LispTests
                         (cond, 
                             ((eq, i, 0), curr), 
                             ((eq, i, 1), curr), 
-                            (true, (fib, (sub, i, 1), (add, curr, prev), curr))))),
+                            (@else, (fib, (sub, i, 1), (add, curr, prev), curr))))),
                 (fib, n, 1, 0)),
             value)
         ));
@@ -525,7 +525,7 @@ public class LispTests
     [Theory]
     [InlineData(10)]
     [InlineData(1000)]
-    //[InlineData(1000000)]
+    [InlineData(1000000)]
     public void TailRecursion2(int value)
     {
         var (x, y, i, count) = Declare("x", "y", "i", "count");
@@ -536,7 +536,7 @@ public class LispTests
                     (lambda, (x, i),
                         (cond, 
                             ((eq, i, 0), x),
-                            (true, (count, (add, x, 1), (sub, i, 1)))))),
+                            (@else, (count, (add, x, 1), (sub, i, 1)))))),
                 (count, 0, y)),
             value)
         ));

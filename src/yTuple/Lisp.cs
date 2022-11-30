@@ -59,10 +59,23 @@ public static class Lisp
     private static Expression ParseCond(ITuple tuple, Dictionary<Symbol, Expression> scope)
     {
         var checkResult = Expression.Variable(typeof(object));
+        var clauses = tuple.ToEnumerable(false).Skip(1).Cast<ITuple>().Reverse().ToArray();
+
+        Expression tail;
+        if(clauses.FirstOrDefault() is ITuple last && last[0] is Else)
+        {
+            tail = Expression.Block(last.ToEnumerable(false).Skip(1).Select(item => ParseExpr(item, scope)));
+            clauses = clauses.Skip(1).ToArray();
+        }
+        else
+        {
+            tail = ParseExpr(NilResult, scope);
+        }
+
         return Expression.Block(
             new[] { checkResult },
-            tuple.ToEnumerable(false).Skip(1).Cast<ITuple>().Reverse().Aggregate(
-                Types.BoxExpr(ParseExpr(NilResult, scope)),
+            clauses.Aggregate(
+                Types.BoxExpr(tail),
                 (result, item) => ParseCondClause(result, item, checkResult, scope)));
     }
 
