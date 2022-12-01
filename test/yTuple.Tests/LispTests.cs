@@ -542,6 +542,44 @@ public class LispTests
         ));
     }
 
+    [Fact]
+    public void UnnamedDeclaration()
+    {
+        var (a, b) = Declare();
+        var (c, d, e) = Declare();
+        var (f, g, h, i) = Declare();
+        var (j, k, l, m, n) = Declare();
+        var (o, p, q, r, s, t) = Declare();
+        var (u, v, w, x, y, z, a1) = Declare();
+        var (b1, c1, d1, e1, f1, g1, h1, i1) = Declare();
+        var (j1, k1, l1, m1, n1, o1, p1, q1, r1) = Declare();
+        var (s1, t1, u1, v1, w1, x1, y1, z1, a2, b2) = Declare();
+
+        var all = new[] {a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, a1, b1, c1,
+            d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1, o1, p1, q1, r1, s1, t1, u1, v1, w1, x1, y1, z1, a2, b2};
+
+        Assert.Equal(all.Length, all.Distinct().Count());
+    }
+
+    [Fact]
+    public void ImplicitOne()
+    {
+        Assert.True(_.foo is Symbol { Name: "_foo" }); 
+    }
+
+    [Fact]
+    public void ImplicitSame()
+    {
+        Assert.True(_.bar == _.bar);
+    }
+
+    [Fact]
+    public void ImplicitDifferent()
+    {
+        Assert.True(_.foo != _.bar);
+    }
+
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)
@@ -564,7 +602,7 @@ public class LispTests
             Assert.Equal(expected, actual); 
         }
     }
-
+    
     private static object? Run(ITuple program) =>
         Lisp.Parse(program).Compile()();
 

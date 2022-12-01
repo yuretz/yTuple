@@ -1,5 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-using System.Xml.Linq;
+﻿using System.Dynamic;
+using System.Runtime.CompilerServices;
 
 namespace yTuple;
 
@@ -167,4 +167,19 @@ public class Declaration : ITuple
     private readonly int _offset;
     private const int _maxDeconstedLength = 10;
     private static int _nextOffset = 0;
+}
+
+public class DynamicDeclaration: DynamicObject
+{
+    public DynamicDeclaration(string prefix)
+    {
+        _prefix = prefix;
+    }
+    public override bool TryGetMember(GetMemberBinder binder, out object? result)
+    {
+        result = new Var($"{_prefix}{binder.Name}");
+        return true;
+    }
+
+    private readonly string _prefix;
 }

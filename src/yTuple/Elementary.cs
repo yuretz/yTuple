@@ -29,6 +29,8 @@ public static class Elementary
     public static readonly Op mul = new Mul();
     public static readonly Op div = new Div();
 
+    public static readonly dynamic _ = new DynamicDeclaration("_");
+
     public static ValueTuple<T> Single<T>(T value) => new(value);
 
     public static Declaration Declare() => new Declaration();
