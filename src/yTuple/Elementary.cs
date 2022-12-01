@@ -31,6 +31,8 @@ public static class Elementary
 
     public static ValueTuple<T> Single<T>(T value) => new(value);
 
+    public static Declaration Declare() => new Declaration();
+
     public static Symbol Declare(string name) => new Var(name);
     
     public static (Symbol, Symbol) Declare(string v1, string v2) => 
