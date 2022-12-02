@@ -13,6 +13,7 @@ public static class Elementary
     public static readonly Symbol lambda = new Lambda();
     public static readonly Symbol define = new Define();
     public static readonly Symbol @else = new Else();
+    public static readonly Symbol begin = new Begin();
 
     public static readonly Op atom = new Atom();
     public static readonly Op car = new Car();

@@ -52,6 +52,8 @@ internal record Define(): Symbol("define");
 
 internal record Else(): Symbol("else");
 
+internal record Begin(): Symbol("begin");
+
 internal record Atom(): Op("atom", 1)
 {
     public override Expression Parse(params Expression[] arguments) => 

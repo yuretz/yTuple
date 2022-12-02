@@ -595,6 +595,16 @@ public class LispTests
         Assert.Equal(expected.GetType(), actual?.GetType());
     }
 
+    [Fact]
+    public void BeginBlock()
+    {
+        AssertResult(3, Run(
+            (begin, 
+                (define, _.x, 1), 
+                (define, _.y, 2), 
+                (add, _.x, _.y))));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

@@ -32,8 +32,9 @@ public static class Lisp
         // lambda
         ITuple tuple when Equals(tuple[0], lambda) => ParseLambda(tuple, scope),
 
-        //// define
-        //ITuple tuple when Equals(tuple[0], define) => ParseDefine(tuple, scope),
+        // begin
+        ITuple tuple when Equals(tuple[0], begin) => ParseBegin(tuple, scope),
+
         
         // dynamic call
         ITuple tuple when tuple[0] is ITuple or Symbol =>
@@ -93,6 +94,37 @@ public static class Lisp
                 Types.BoxExpr(items.FirstOrDefault(ParseExpr(NilResult, scope)))));
         var rest = Types.CoerceExpr<object>(Expression.Block(items.Skip(1).Prepend(checkResult)));
         return Expression.Condition(check, rest, Types.CoerceExpr<object>(otherwise));
+    }
+
+    private static Expression ParseBegin(ITuple tuple, Dictionary<Symbol, Expression> scope)
+    {
+        var items = tuple.ToEnumerable(false).Skip(1).ToList();
+
+        var defines = items
+            .TakeWhile(item => item is ITuple tuple && tuple[0] is Define)
+            .Cast<ITuple>()
+            .Select(ParseDefine)
+            .ToList();
+
+        scope = new(
+            defines
+                // defines (shadowing outer scope)
+                .Select(item => new KeyValuePair<Symbol, Expression>(item.Symbol, item.Parameter))
+                // outer scope
+                .Concat(scope)
+                .DistinctBy(item => item.Key));
+
+        return Types.BoxExpr(
+            Expression.Block(
+                // defines become block variables
+                defines.Select(item => item.Parameter),
+
+                defines.Select(
+                    item => Expression.Assign(
+                        item.Parameter,
+                        Types.BoxExpr(ParseExpr(item.Init, scope))))
+                    // run the rest
+                    .Concat(items.Skip(defines.Count).Select(item => ParseExpr(item, scope)))));
     }
 
     private static Expression ParseLambda(ITuple tuple, Dictionary<Symbol, Expression> scope)
