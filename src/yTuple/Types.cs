@@ -37,6 +37,10 @@ internal static class Types
         {
             return typeof(ulong);
         }
+        else if (left == typeof(long) || right == typeof(long))
+        {
+            return typeof(long);
+        }
         else if (left == typeof(uint) && (right == typeof(int) || right == typeof(short) || right == typeof(sbyte))
             || right == typeof(uint) && (left == typeof(int) || left == typeof(short) || left == typeof(sbyte)))
         {

@@ -513,9 +513,9 @@ public class LispTests
             ((lambda, Single(n),
                 (define, fib,
                     (lambda, (i, curr, prev),
-                        (cond, 
-                            ((eq, i, 0), curr), 
-                            ((eq, i, 1), curr), 
+                        (cond,
+                            ((eq, i, 0), curr),
+                            ((eq, i, 1), curr),
                             (@else, (fib, (sub, i, 1), (add, curr, prev), curr))))),
                 (fib, n, 1, 0)),
             value)
@@ -534,7 +534,7 @@ public class LispTests
             ((lambda, Single(y),
                 (define, count,
                     (lambda, (x, i),
-                        (cond, 
+                        (cond,
                             ((eq, i, 0), x),
                             (@else, (count, (add, x, 1), (sub, i, 1)))))),
                 (count, 0, y)),
@@ -564,7 +564,7 @@ public class LispTests
     [Fact]
     public void ImplicitOne()
     {
-        Assert.True(_.foo is Symbol { Name: "_foo" }); 
+        Assert.True(_.foo is Symbol { Name: "_foo" });
     }
 
     [Fact]
@@ -579,6 +579,21 @@ public class LispTests
         Assert.True(_.foo != _.bar);
     }
 
+    [Theory]
+    [InlineData((short)1, 2, 3)]
+    [InlineData((short)1, (short)2, 3)]
+    [InlineData(1L, (short)2, 3L)]
+    [InlineData(1L, 2L, 3L)]
+    [InlineData(1, 2D, 3D)]
+    [InlineData(1D, 2F, 3D)]
+    [InlineData(1F, 2F, 3F)]
+    [InlineData(1UL, 2U, 3UL)]
+    public void NumericPromotion(object x, object y, object expected)
+    {
+        var actual = Run((add, x, y));
+        Assert.Equal(expected, actual);
+        Assert.Equal(expected.GetType(), actual?.GetType());
+    }
 
     private void AssertResult(object? expected, object? actual)
     {
