@@ -64,7 +64,9 @@ internal static class Types
         ? Expression.Convert(expression, typeof(object))
         : expression;
 
-    public static Expression CoerceExpr<T>(Expression expression) => expression.Type != typeof(T)
-        ? Expression.Convert(expression, typeof(T))
+    public static Expression CoerceExpr<T>(Expression expression) => CoerceExpr(typeof(T), expression);
+
+    public static Expression CoerceExpr(Type type, Expression expression) => expression.Type != type
+        ? Expression.Convert(expression, type)
         : expression;
 }

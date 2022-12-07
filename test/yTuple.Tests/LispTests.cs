@@ -605,6 +605,80 @@ public class LispTests
                 (add, _.x, _.y))));
     }
 
+    [Theory]
+    [InlineData(new object[] { }, true)]
+    [InlineData(new object[] { 1 }, true)]
+    [InlineData(new object[] { 1, 2 }, true)]
+    [InlineData(new object[] { 2, 1 }, false)]
+    [InlineData(new object[] { 42, 42 }, false)]
+    [InlineData(new object[] { -5, 3, 42 }, true)]
+    [InlineData(new object[] { -5, 3, 42, -50, 1000 }, false)]
+    [InlineData(new object[] { -5, 3.7, 42, 50L, 1000 }, true)]
+    [InlineData(new object[] { -5, 42, 50L, 1000, 3.7 }, false)]
+    public void LessThen(object[] args, bool result)
+    {
+        var program = args.Select(item => item ?? nil).Prepend(lt).ToTuple(false);
+        AssertResult(result, Run(program));
+    }
+
+    [Theory]
+    [InlineData(new object[] { }, true)]
+    [InlineData(new object[] { 1 }, true)]
+    [InlineData(new object[] { 2, 1 }, true)]
+    [InlineData(new object[] { 1, 2 }, false)]
+    [InlineData(new object[] { 42, 42 }, false)]
+    [InlineData(new object[] { 42, 3, -5 }, true)]
+    [InlineData(new object[] { 1000, -50, 42, 3, -5 }, false)]
+    [InlineData(new object[] { 1000, 50L, 42, 3.7, -5 }, true)]
+    [InlineData(new object[] { 1000, 50L, 42, -5, 3.7}, false)]
+    public void GreaterThen(object[] args, bool result)
+    {
+        var program = args.Select(item => item ?? nil).Prepend(gt).ToTuple(false);
+        AssertResult(result, Run(program));
+    }
+
+    [Theory]
+    [InlineData(new object[] { }, true)]
+    [InlineData(new object[] { 1 }, true)]
+    [InlineData(new object[] { 1, 2 }, true)]
+    [InlineData(new object[] { 2, 1 }, false)]
+    [InlineData(new object[] { 42, 42 }, true)]
+    [InlineData(new object[] { -5, 3, 42 }, true)]
+    [InlineData(new object[] { -5, 3, 42, -50, 1000 }, false)]
+    [InlineData(new object[] { -5, 3.7, 42, 50L, 50, 1000 }, true)]
+    [InlineData(new object[] { -5, 42, 42, 50L, 1000, 3.7 }, false)]
+    public void LessThenOrEqual(object[] args, bool result)
+    {
+        var program = args.Select(item => item ?? nil).Prepend(le).ToTuple(false);
+        AssertResult(result, Run(program));
+    }
+
+    [Theory]
+    [InlineData(new object[] { }, true)]
+    [InlineData(new object[] { 1 }, true)]
+    [InlineData(new object[] { 2, 1 }, true)]
+    [InlineData(new object[] { 1, 2 }, false)]
+    [InlineData(new object[] { 42, 42 }, true)]
+    [InlineData(new object[] { 42, 3, -5 }, true)]
+    [InlineData(new object[] { 1000, -50, 42, 3, -5 }, false)]
+    [InlineData(new object[] { 1000, 50L, 50, 42, 42, 3.7, -5 }, true)]
+    [InlineData(new object[] { 1000, 50L, 42, -5, 3.7 }, false)]
+    public void GreaterThenOrEqual(object[] args, bool result)
+    {
+        var program = args.Select(item => item ?? nil).Prepend(ge).ToTuple(false);
+        AssertResult(result, Run(program));
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void CompareDynamic(bool flag, bool result)
+    {
+        AssertResult(result, Run(
+            ((cond, (flag, gt), (@else, lt)), 1, 2, 3.5, 7)
+        ));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

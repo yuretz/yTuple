@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
+using System.Security.Principal;
 
 namespace yTuple;
 
@@ -134,8 +135,7 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
                 });
 
         var binary = (object? left, object? right) =>
-            typed[
-                Types.PromoteNumeric(
+            typed[Types.PromoteNumeric(
                 left?.GetType() ?? throw new ArgumentNullException(),
                 right?.GetType() ?? throw new ArgumentNullException())](left, right);
 
@@ -145,9 +145,7 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
     private Expression MakeBinary(Expression left, Expression right)
     {
         var type = Types.PromoteNumeric(left.Type, right.Type);
-        left = left.Type == type ? left : Expression.Convert(left, type);
-        right = right.Type == type ? right : Expression.Convert(right, type);
-        return Expression.MakeBinary(Type, left, right);
+        return Expression.MakeBinary(Type, Types.CoerceExpr(type, left), Types.CoerceExpr(type, right));
     }
 }
 
@@ -207,3 +205,77 @@ internal record Not() : Op("not", 1)
 
     private static readonly MethodInfo _isFalse = GetMethod((object item) => Types.IsFalse(item));
 }
+
+internal record Comparison(string Name, ExpressionType Type): Op(Name, -1)
+{
+    public override Expression Parse(params Expression[] arguments) => 
+        arguments.Aggregate(
+            (Result: (Expression)Expression.Constant(true), Previous: default(Expression)),
+            (result, item) =>
+            {
+                if(result.Previous is null)
+                {
+                    return (result.Result, Previous: item);
+                }
+
+                var numeric = Types.PromoteNumeric(result.Previous.Type, item.Type);
+                return 
+                (
+                    Result: Expression.MakeBinary(ExpressionType.And, result.Result, MakeBinary(result.Previous, item)),
+                    Previous: item
+                );
+            }).Result;
+
+    protected override Func<object?[], object?> GetRun()
+    {
+        var typed = Types.Numeric
+            .ToDictionary(
+                type => type,
+                type =>
+                {
+                    var item = Expression.Parameter(typeof(object));
+                    var result = Expression.Parameter(typeof(object));
+                    return Expression.Lambda<Func<object?, object?, bool>>(
+                            Expression.MakeBinary(Type, Expression.Convert(result, type), Expression.Convert(item, type)),
+                        true,
+                        result,
+                        item).Compile();
+                });
+
+        var compare = (object? left, object? right) =>
+            typed[Types.PromoteNumeric(
+                left?.GetType() ?? throw new ArgumentNullException(),
+                right?.GetType() ?? throw new ArgumentNullException())](left, right);
+
+        return (object?[] args) =>
+        {
+            object? previous = null;
+            var first = false;
+            foreach(var item in args)
+            {
+                if(!first)
+                {
+                    first = true;
+                }
+                else if(!compare(previous, item))
+                {
+                    return false;
+                }
+                
+                previous = item;
+            }
+            return true;
+        };
+    }
+
+    private Expression MakeBinary(Expression left, Expression right)
+    {
+        var type = Types.PromoteNumeric(left.Type, right.Type);
+        return Expression.MakeBinary(Type, Types.CoerceExpr(type, left), Types.CoerceExpr(type, right));
+    }
+}
+
+internal record Lt(): Comparison("<", ExpressionType.LessThan);
+internal record Gt(): Comparison(">", ExpressionType.GreaterThan);
+internal record Le(): Comparison("<=", ExpressionType.LessThanOrEqual);
+internal record Ge(): Comparison(">=", ExpressionType.GreaterThanOrEqual);

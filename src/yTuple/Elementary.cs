@@ -30,6 +30,11 @@ public static class Elementary
     public static readonly Op mul = new Mul();
     public static readonly Op div = new Div();
 
+    public static readonly Op lt = new Lt();
+    public static readonly Op gt = new Gt();
+    public static readonly Op le = new Le();
+    public static readonly Op ge = new Ge();
+
     public static readonly dynamic _ = new DynamicDeclaration("_");
 
     public static ValueTuple<T> Single<T>(T value) => new(value);
