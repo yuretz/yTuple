@@ -24,7 +24,7 @@ Among other things, it is:
 * More C# interop features
 * Serialization, so that it's possible to load code from external source
 * Support macros
-* Use [FastExpressionCompiler](dadhi/FastExpressionCompiler) for even better performance
+* Use [FastExpressionCompiler](https://github.com/dadhi/FastExpressionCompiler) for even better performance
 
 ## Futher info
 If you have a question, or think you found a bug, or have a good idea and don't mind sharing it, please open an issue and I would be happy to discuss it.
