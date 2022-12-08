@@ -7,6 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "yTuple", "src\yTuple\yTuple
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "yTuple.Tests", "test\yTuple.Tests\yTuple.Tests.csproj", "{766430AE-E1B3-4DEE-AFDE-5AA5B4D781AA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2235FAA9-10F7-4E3B-85C3-DC0011695DBC}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
