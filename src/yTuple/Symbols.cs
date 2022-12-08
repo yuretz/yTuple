@@ -118,6 +118,7 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
 
     protected override Func<object?[], object?> GetRun()
     {
+        var changeType = GetMethod((object value, Type type) => Convert.ChangeType(value, type));
         var typed = Types.Numeric
             .ToDictionary(
                 type => type,
@@ -127,7 +128,10 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
                     var result = Expression.Parameter(typeof(object));
                     return Expression.Lambda<Func<object, object, object>>(
                         Expression.Convert(
-                            Expression.MakeBinary(Type, Expression.Convert(result, type), Expression.Convert(item, type)),
+                            Expression.MakeBinary(
+                                Type, 
+                                Expression.Convert(Expression.Call(changeType, result, Expression.Constant(type)), type), 
+                                Expression.Convert(Expression.Call(changeType, item, Expression.Constant(type)), type)),
                             typeof(object)),
                         true,
                         result,
@@ -228,6 +232,8 @@ internal record Comparison(string Name, ExpressionType Type): Op(Name, -1)
 
     protected override Func<object?[], object?> GetRun()
     {
+        var changeType = GetMethod((object value, Type type) => Convert.ChangeType(value, type));
+
         var typed = Types.Numeric
             .ToDictionary(
                 type => type,
@@ -236,7 +242,10 @@ internal record Comparison(string Name, ExpressionType Type): Op(Name, -1)
                     var item = Expression.Parameter(typeof(object));
                     var result = Expression.Parameter(typeof(object));
                     return Expression.Lambda<Func<object?, object?, bool>>(
-                            Expression.MakeBinary(Type, Expression.Convert(result, type), Expression.Convert(item, type)),
+                            Expression.MakeBinary(
+                                Type, 
+                                Expression.Convert(Expression.Call(changeType, result, Expression.Constant(type)), type), 
+                                Expression.Convert(Expression.Call(changeType, item, Expression.Constant(type)), type)),
                         true,
                         result,
                         item).Compile();
