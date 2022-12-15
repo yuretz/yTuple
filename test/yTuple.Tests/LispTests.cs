@@ -679,6 +679,25 @@ public class LispTests
         ));
     }
 
+    [Fact]
+    public void Squares()
+    {
+        var f = Lisp.Parse(n =>
+            (begin,
+                (define, _.loop, (lambda, (_.i, _.res),
+                    (cond,
+                        ((eq, _.i, 0), _.res),
+                        (@else,
+                            (_.loop,
+                                (sub, _.i, 1),
+                                (cons, (mul, _.i, _.i), _.res)))))),
+                (_.loop, n, nil)
+            )
+        ).Compile();
+
+        AssertResult(new object[] {1, 4, 9, 16}, f(4));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

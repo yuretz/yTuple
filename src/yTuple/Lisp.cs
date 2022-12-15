@@ -5,7 +5,7 @@ using static yTuple.Elementary;
 
 namespace yTuple;
 
-public static class Lisp
+public static partial class Lisp
 {
     public static Expression<Func<object?>> Parse(ITuple program) => 
         Expression.Lambda<Func<object?>>(Types.BoxExpr(ParseExpr(program, new())), true);
