@@ -17,11 +17,36 @@ Among other things, it is:
 * :question: Work in progress, more goodies to come...
 
 ## Show me the code
+First things first, let's add _λTuple_ to the usings section of your program.
+```csharp
+using yTuple;
+using static yTuple.Elementary;
+```
 
- For now, the best place to get a look and feel of it would be in the [test code](./test/yTuple.Tests/LispTests.cs). More examples are coming soon.
+This should make it possible to write the following code.
+```csharp
+var fib = Lisp.Parse(n =>
+    (begin,
+        (define, _.loop, (lambda, (_.i, _.curr, _.prev),
+            (cond,
+                ((eq, _.i, 0), 0),
+                ((eq, _.i, 1), _.curr),
+                (@else, 
+                    (_.loop, (sub, _.i, 1), (add, _.curr, _.prev), _.curr))))),
+        (_.loop, n, 1, 0))
+).Compile();
+
+Console.WriteLine(fib(42));
+
+```
+This creates a tail-recursive lambda function `fib()`, that computes n-th number in the Fibonacci sequence and then uses it to output the result for `n = 42`. 
+
+
+Another good place to get a look and feel of it would be in the [test code](./test/yTuple.Tests/LispTests.cs). More examples are coming soon.
 
 ## Future features & ideas
 * More C# interop features
+* Better static typing to avoid unnecessary boxing and dynamic type casts
 * Serialization, so that it's possible to load code from external source
 * Support macros
 * Use [FastExpressionCompiler](https://github.com/dadhi/FastExpressionCompiler) for even better performance
