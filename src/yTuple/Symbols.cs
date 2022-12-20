@@ -118,8 +118,16 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
 
     protected override Func<object?[], object?> GetRun()
     {
-        var changeType = GetMethod((object value, Type type) => Convert.ChangeType(value, type));
-        var typed = Types.Numeric
+        var binary = (object? left, object? right) =>
+            TypedOps[Types.PromoteNumeric(
+                left?.GetType() ?? throw new ArgumentNullException(),
+                right?.GetType() ?? throw new ArgumentNullException())](left, right);
+
+        return (object?[] args) => args.Length > 1 ? args.Aggregate(binary) : binary(Identity, args[0]);
+    }
+
+    private Dictionary<Type, Func<object, object, object>> TypedOps => 
+        _typedOps ??= Types.Numeric
             .ToDictionary(
                 type => type,
                 type =>
@@ -129,28 +137,43 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
                     return Expression.Lambda<Func<object, object, object>>(
                         Expression.Convert(
                             Expression.MakeBinary(
-                                Type, 
-                                Expression.Convert(Expression.Call(changeType, result, Expression.Constant(type)), type), 
-                                Expression.Convert(Expression.Call(changeType, item, Expression.Constant(type)), type)),
+                                Type,
+                                Expression.Convert(Expression.Call(_changeType, result, Expression.Constant(type)), type),
+                                Expression.Convert(Expression.Call(_changeType, item, Expression.Constant(type)), type)),
                             typeof(object)),
                         true,
                         result,
                         item).Compile();
                 });
 
-        var binary = (object? left, object? right) =>
-            typed[Types.PromoteNumeric(
-                left?.GetType() ?? throw new ArgumentNullException(),
-                right?.GetType() ?? throw new ArgumentNullException())](left, right);
-
-        return (object?[] args) => args.Length > 1 ? args.Aggregate(binary) : binary(Identity, args[0]);
-    }
-
     private Expression MakeBinary(Expression left, Expression right)
     {
+
+        if(left.Type == typeof(object) || right.Type == typeof(object))
+        {
+            var typeVar = Expression.Variable(typeof(Type));
+            var leftBox = Expression.Variable(typeof(object));
+            var rightBox = Expression.Variable(typeof(object));
+            
+            return Expression.Block(
+                new[] { typeVar, leftBox, rightBox  },
+                Expression.Assign(leftBox, Types.BoxExpr(left)),
+                Expression.Assign(rightBox, Types.BoxExpr(right)),
+                Expression.Assign(typeVar, Expression.Call(_promoteNumericValues, leftBox, rightBox)),
+
+                Expression.Invoke(
+                    Expression.Property(Expression.Constant(TypedOps), "Item", typeVar),
+                    leftBox,
+                    rightBox));    
+        }
         var type = Types.PromoteNumeric(left.Type, right.Type);
         return Expression.MakeBinary(Type, Types.CoerceExpr(type, left), Types.CoerceExpr(type, right));
     }
+
+    private Dictionary<Type, Func<object, object, object>>? _typedOps;
+    private readonly MethodInfo _changeType = GetMethod((object? value, Type type) => Convert.ChangeType(value, type));
+    private readonly MethodInfo _promoteNumericValues = GetMethod((object left, object right) => Types.PromoteNumericValues(left, right));
+
 }
 
 internal record Add(): NumericOp("+", Expression.Constant(0), ExpressionType.Add);

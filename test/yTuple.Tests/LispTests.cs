@@ -698,6 +698,13 @@ public class LispTests
         AssertResult(new object[] {1, 4, 9, 16}, f(4));
     }
 
+    [Fact]
+    public void NumericPromotionDynamic()
+    {
+        var f = Lisp.Parse(x => (add, x, 1)).Compile();
+        Assert.Equal(42L, f(41L));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)

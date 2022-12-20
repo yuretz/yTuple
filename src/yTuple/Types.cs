@@ -56,6 +56,13 @@ internal static class Types
         }
     }
 
+    public static Type PromoteNumericValues(object? left, object? right)
+    {
+        ArgumentNullException.ThrowIfNull(left, nameof(left));
+        ArgumentNullException.ThrowIfNull(right, nameof(right));
+        return PromoteNumeric(left.GetType(), right.GetType());
+    }
+
     public static bool IsFalse(object? value) => value is bool flag && !flag || value == Empty;
 
     public static bool IsTrue(object? value) => !IsFalse(value);
