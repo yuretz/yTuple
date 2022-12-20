@@ -35,11 +35,15 @@ public static class Elementary
     public static readonly Op le = new Le();
     public static readonly Op ge = new Ge();
 
+#pragma warning disable CA1707 // Identifiers should not contain underscores
     public static readonly dynamic _ = new DynamicDeclaration("_");
+#pragma warning restore CA1707 // Identifiers should not contain underscores
 
+#pragma warning disable CA1720 // Identifier contains type name
     public static ValueTuple<T> Single<T>(T value) => new(value);
+#pragma warning restore CA1720 // Identifier contains type name
 
-    public static Declaration Declare() => new Declaration();
+    public static Declaration Declare() => new();
 
     public static Symbol Declare(string name) => new Var(name);
     

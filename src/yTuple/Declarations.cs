@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace yTuple;
 
-public class Declaration : ITuple
+public sealed class Declaration : ITuple
 {
     public Declaration() => _offset = _nextOffset++;
 
@@ -166,7 +166,7 @@ public class Declaration : ITuple
 
     private readonly int _offset;
     private const int _maxDeconstedLength = 10;
-    private static int _nextOffset = 0;
+    private static int _nextOffset;
 }
 
 public class DynamicDeclaration: DynamicObject
@@ -177,6 +177,8 @@ public class DynamicDeclaration: DynamicObject
     }
     public override bool TryGetMember(GetMemberBinder binder, out object? result)
     {
+        ArgumentNullException.ThrowIfNull(binder, nameof(binder));
+
         result = new Var($"{_prefix}{binder.Name}");
         return true;
     }

@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Globalization;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Principal;
 
@@ -15,9 +16,9 @@ public abstract record Op(string Name, int Arity): Symbol(Name)
 {
     public abstract Expression Parse(params Expression[] arguments);
 
-    public Delegate Run => _run ??= GetRun();
+    public Delegate Run => _run ??= CreateRun();
 
-    protected virtual Func<object?[], object?> GetRun()
+    protected virtual Func<object?[], object?> CreateRun()
     {
         var args = Expression.Parameter(typeof(object?[]), "args");
         
@@ -116,7 +117,7 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
             ? arguments.Aggregate(MakeBinary) 
             : MakeBinary(Identity, arguments[0]);
 
-    protected override Func<object?[], object?> GetRun()
+    protected override Func<object?[], object?> CreateRun()
     {
         var binary = (object? left, object? right) =>
             TypedOps[Types.PromoteNumeric(
@@ -138,8 +139,20 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
                         Expression.Convert(
                             Expression.MakeBinary(
                                 Type,
-                                Expression.Convert(Expression.Call(_changeType, result, Expression.Constant(type)), type),
-                                Expression.Convert(Expression.Call(_changeType, item, Expression.Constant(type)), type)),
+                                Expression.Convert(
+                                    Expression.Call(
+                                        _changeType, 
+                                        result, 
+                                        Expression.Constant(type), 
+                                        Expression.Constant(CultureInfo.InvariantCulture)), 
+                                    type),
+                                Expression.Convert(
+                                    Expression.Call(
+                                        _changeType,
+                                        item,
+                                        Expression.Constant(type),
+                                        Expression.Constant(CultureInfo.InvariantCulture)), 
+                                    type)),
                             typeof(object)),
                         true,
                         result,
@@ -171,8 +184,12 @@ internal abstract record NumericOp(string Name, ConstantExpression Identity, Exp
     }
 
     private Dictionary<Type, Func<object, object, object>>? _typedOps;
-    private readonly MethodInfo _changeType = GetMethod((object? value, Type type) => Convert.ChangeType(value, type));
-    private readonly MethodInfo _promoteNumericValues = GetMethod((object left, object right) => Types.PromoteNumericValues(left, right));
+    
+    private readonly MethodInfo _changeType = GetMethod(
+        (object? value, Type type) => Convert.ChangeType(value, type, CultureInfo.InvariantCulture));
+    
+    private readonly MethodInfo _promoteNumericValues = GetMethod(
+        (object left, object right) => Types.PromoteNumericValues(left, right));
 
 }
 
@@ -190,7 +207,7 @@ internal record LogicalBinaryOp(string Name, ConstantExpression Identity, Expres
         _ => arguments.Aggregate(MakeBinary)
     };
 
-    protected override Func<object?[], object?> GetRun()
+    protected override Func<object?[], object?> CreateRun()
     {
         var left = Expression.Parameter(typeof(object));
         var right = Expression.Parameter(typeof(object));
@@ -253,9 +270,9 @@ internal record Comparison(string Name, ExpressionType Type): Op(Name, -1)
                 );
             }).Result;
 
-    protected override Func<object?[], object?> GetRun()
+    protected override Func<object?[], object?> CreateRun()
     {
-        var changeType = GetMethod((object value, Type type) => Convert.ChangeType(value, type));
+        var changeType = GetMethod((object value, Type type) => Convert.ChangeType(value, type, CultureInfo.InvariantCulture));
 
         var typed = Types.Numeric
             .ToDictionary(
@@ -267,8 +284,20 @@ internal record Comparison(string Name, ExpressionType Type): Op(Name, -1)
                     return Expression.Lambda<Func<object?, object?, bool>>(
                             Expression.MakeBinary(
                                 Type, 
-                                Expression.Convert(Expression.Call(changeType, result, Expression.Constant(type)), type), 
-                                Expression.Convert(Expression.Call(changeType, item, Expression.Constant(type)), type)),
+                                Expression.Convert(
+                                    Expression.Call(
+                                        changeType,
+                                        result,
+                                        Expression.Constant(type),
+                                        Expression.Constant(CultureInfo.InvariantCulture)),
+                                    type), 
+                                Expression.Convert(
+                                    Expression.Call(
+                                        changeType,
+                                        item,
+                                        Expression.Constant(type), 
+                                        Expression.Constant(CultureInfo.InvariantCulture)),
+                                    type)),
                         true,
                         result,
                         item).Compile();

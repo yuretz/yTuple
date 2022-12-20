@@ -6,10 +6,17 @@ namespace yTuple;
 
 public static partial class Lisp
 {
-    public static Expression<Func<object?>> Parse(Func<ITuple> program) => Parse(program());
+    public static Expression<Func<object?>> Parse(Func<ITuple> program)
+    {
+        ArgumentNullException.ThrowIfNull(program, nameof(program));
+        return Parse(program());
+    }
+        
 
     public static Expression<Func<object?, object?>> Parse(Func<Symbol, ITuple> program)
     {
+        ArgumentNullException.ThrowIfNull(program, nameof(program));
+
         var v0 = Declare()[0];
         var p0 = Expression.Parameter(typeof(object));
         
@@ -21,6 +28,8 @@ public static partial class Lisp
 
     public static Expression<Func<object?, object?, object?>> Parse(Func<Symbol, Symbol, ITuple> program)
     {
+        ArgumentNullException.ThrowIfNull(program, nameof(program));
+
         var (v0, v1) = Declare();
         var p0 = Expression.Parameter(typeof(object));
         var p1 = Expression.Parameter(typeof(object));
@@ -39,6 +48,8 @@ public static partial class Lisp
 
     public static Expression<Func<object?, object?, object?, object?>> Parse(Func<Symbol, Symbol, Symbol, ITuple> program)
     {
+        ArgumentNullException.ThrowIfNull(program, nameof(program));
+
         var (v0, v1, v2) = Declare();
         var p0 = Expression.Parameter(typeof(object));
         var p1 = Expression.Parameter(typeof(object));
@@ -60,6 +71,8 @@ public static partial class Lisp
     public static Expression<Func<object?, object?, object?, object?, object?>> Parse(
         Func<Symbol, Symbol, Symbol, Symbol, ITuple> program)
     {
+        ArgumentNullException.ThrowIfNull(program, nameof(program));
+
         var (v0, v1, v2, v3) = Declare();
         var p0 = Expression.Parameter(typeof(object));
         var p1 = Expression.Parameter(typeof(object));
@@ -83,6 +96,8 @@ public static partial class Lisp
     public static Expression<Func<object?, object?, object?, object?, object?, object?>> Parse(
         Func<Symbol, Symbol, Symbol, Symbol, Symbol, ITuple> program)
     {
+        ArgumentNullException.ThrowIfNull(program, nameof(program));
+
         var (v0, v1, v2, v3, v4) = Declare();
         var p0 = Expression.Parameter(typeof(object));
         var p1 = Expression.Parameter(typeof(object));
@@ -108,6 +123,8 @@ public static partial class Lisp
     public static Expression<Func<object?, object?, object?, object?, object?, object?, object?>> Parse(
         Func<Symbol, Symbol, Symbol, Symbol, Symbol, Symbol, ITuple> program)
     {
+        ArgumentNullException.ThrowIfNull(program, nameof(program));
+
         var (v0, v1, v2, v3, v4, v5) = Declare();
         var p0 = Expression.Parameter(typeof(object));
         var p1 = Expression.Parameter(typeof(object));
@@ -135,6 +152,8 @@ public static partial class Lisp
     public static Expression<Func<object?, object?, object?, object?, object?, object?, object?, object?>> Parse(
         Func<Symbol, Symbol, Symbol, Symbol, Symbol, Symbol, Symbol, ITuple> program)
     {
+        ArgumentNullException.ThrowIfNull(program, nameof(program));
+
         var (v0, v1, v2, v3, v4, v5, v6) = Declare();
         var p0 = Expression.Parameter(typeof(object));
         var p1 = Expression.Parameter(typeof(object));
