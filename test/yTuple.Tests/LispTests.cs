@@ -698,11 +698,22 @@ public class LispTests
         AssertResult(new object[] {1, 4, 9, 16}, f(4));
     }
 
-    [Fact]
-    public void NumericPromotionDynamic()
+    [Theory]
+    [InlineData(41L, 1, 42L)]
+    [InlineData(41, 1L, 42L)]
+    [InlineData(41D, 1L, 42D)]
+    [InlineData((short)1, 2, 3)]
+    [InlineData((short)1, (short)2, 3)]
+    [InlineData(1L, (short)2, 3L)]
+    [InlineData(1L, 2L, 3L)]
+    [InlineData(1, 2D, 3D)]
+    [InlineData(1D, 2F, 3D)]
+    [InlineData(1F, 2F, 3F)]
+    [InlineData(1UL, 2U, 3UL)]
+    public void NumericPromotionDynamic(object argument, object summand, object result)
     {
-        var f = Lisp.Parse(x => (add, x, 1)).Compile();
-        Assert.Equal(42L, f(41L));
+        var f = Lisp.Parse(x => (add, x, summand)).Compile();
+        Assert.Equal(result, f(argument));
     }
 
     private void AssertResult(object? expected, object? actual)
