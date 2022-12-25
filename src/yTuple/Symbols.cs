@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Security.Principal;
 
 namespace yTuple;
 
@@ -272,39 +271,8 @@ internal record Comparison(string Name, ExpressionType Type): Op(Name, -1)
 
     protected override Func<object?[], object?> CreateRun()
     {
-        var changeType = GetMethod((object value, Type type) => Convert.ChangeType(value, type, CultureInfo.InvariantCulture));
-
-        var typed = Types.Numeric
-            .ToDictionary(
-                type => type,
-                type =>
-                {
-                    var item = Expression.Parameter(typeof(object));
-                    var result = Expression.Parameter(typeof(object));
-                    return Expression.Lambda<Func<object?, object?, bool>>(
-                            Expression.MakeBinary(
-                                Type, 
-                                Expression.Convert(
-                                    Expression.Call(
-                                        changeType,
-                                        result,
-                                        Expression.Constant(type),
-                                        Expression.Constant(CultureInfo.InvariantCulture)),
-                                    type), 
-                                Expression.Convert(
-                                    Expression.Call(
-                                        changeType,
-                                        item,
-                                        Expression.Constant(type), 
-                                        Expression.Constant(CultureInfo.InvariantCulture)),
-                                    type)),
-                        true,
-                        result,
-                        item).Compile();
-                });
-
         var compare = (object? left, object? right) =>
-            typed[Types.PromoteNumeric(
+            TypedOps[Types.PromoteNumeric(
                 left?.GetType() ?? throw new ArgumentNullException(),
                 right?.GetType() ?? throw new ArgumentNullException())](left, right);
 
@@ -329,11 +297,65 @@ internal record Comparison(string Name, ExpressionType Type): Op(Name, -1)
         };
     }
 
+    private Dictionary<Type, Func<object?, object?, bool>> TypedOps => _typedOps ??= Types.Numeric
+            .ToDictionary(
+                type => type,
+                type =>
+                {
+                    var item = Expression.Parameter(typeof(object));
+                    var result = Expression.Parameter(typeof(object));
+                    return Expression.Lambda<Func<object?, object?, bool>>(
+                            Expression.MakeBinary(
+                                Type,
+                                Expression.Convert(
+                                    Expression.Call(
+                                        _changeType,
+                                        result,
+                                        Expression.Constant(type),
+                                        Expression.Constant(CultureInfo.InvariantCulture)),
+                                    type),
+                                Expression.Convert(
+                                    Expression.Call(
+                                        _changeType,
+                                        item,
+                                        Expression.Constant(type),
+                                        Expression.Constant(CultureInfo.InvariantCulture)),
+                                    type)),
+                        true,
+                        result,
+                        item).Compile();
+                });
+
     private Expression MakeBinary(Expression left, Expression right)
     {
+        if(left.Type == typeof(object) || right.Type == typeof(object))
+        {
+            var typeVar = Expression.Variable(typeof(Type));
+            var leftBox = Expression.Variable(typeof(object));
+            var rightBox = Expression.Variable(typeof(object));
+
+            return Expression.Block(
+                new[] { typeVar, leftBox, rightBox },
+                Expression.Assign(leftBox, Types.BoxExpr(left)),
+                Expression.Assign(rightBox, Types.BoxExpr(right)),
+                Expression.Assign(typeVar, Expression.Call(_promoteNumericValues, leftBox, rightBox)),
+
+                Expression.Invoke(
+                    Expression.Property(Expression.Constant(TypedOps), "Item", typeVar),
+                    leftBox,
+                    rightBox));
+        }
         var type = Types.PromoteNumeric(left.Type, right.Type);
         return Expression.MakeBinary(Type, Types.CoerceExpr(type, left), Types.CoerceExpr(type, right));
     }
+
+    private Dictionary<Type, Func<object?, object?, bool>>? _typedOps;
+    
+    private readonly MethodInfo _changeType = GetMethod(
+        (object value, Type type) => Convert.ChangeType(value, type, CultureInfo.InvariantCulture));
+
+    private readonly MethodInfo _promoteNumericValues = GetMethod(
+        (object left, object right) => Types.PromoteNumericValues(left, right));
 }
 
 internal record Lt(): Comparison("<", ExpressionType.LessThan);

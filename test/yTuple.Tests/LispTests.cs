@@ -592,16 +592,16 @@ public class LispTests
     {
         var actual = Run((add, x, y));
         Assert.Equal(expected, actual);
-        Assert.Equal(expected.GetType(), actual?.GetType());
+        Assert.Equal(expected?.GetType(), actual?.GetType());
     }
 
     [Fact]
     public void BeginBlock()
     {
         AssertResult(3, Run(
-            (begin, 
-                (define, _.x, 1), 
-                (define, _.y, 2), 
+            (begin,
+                (define, _.x, 1),
+                (define, _.y, 2),
                 (add, _.x, _.y))));
     }
 
@@ -630,7 +630,7 @@ public class LispTests
     [InlineData(new object[] { 42, 3, -5 }, true)]
     [InlineData(new object[] { 1000, -50, 42, 3, -5 }, false)]
     [InlineData(new object[] { 1000, 50L, 42, 3.7, -5 }, true)]
-    [InlineData(new object[] { 1000, 50L, 42, -5, 3.7}, false)]
+    [InlineData(new object[] { 1000, 50L, 42, -5, 3.7 }, false)]
     public void GreaterThen(object[] args, bool result)
     {
         var program = args.Select(item => item ?? nil).Prepend(gt).ToTuple(false);
@@ -695,7 +695,7 @@ public class LispTests
             )
         ).Compile();
 
-        AssertResult(new object[] {1, 4, 9, 16}, f(4));
+        AssertResult(new object[] { 1, 4, 9, 16 }, f(4));
     }
 
     [Theory]
@@ -710,10 +710,28 @@ public class LispTests
     [InlineData(1D, 2F, 3D)]
     [InlineData(1F, 2F, 3F)]
     [InlineData(1UL, 2U, 3UL)]
-    public void NumericPromotionDynamic(object argument, object summand, object result)
+    public void NumericPromotionDynamic1(object argument, object summand, object result)
     {
         var f = Lisp.Parse(x => (add, x, summand)).Compile();
         Assert.Equal(result, f(argument));
+    }
+
+    [Theory]
+    [InlineData(1L, 2D, true)]
+    [InlineData(2D, 1L, false)]
+    [InlineData(1, 41L, true)]
+    [InlineData(41, 1L, false)]
+    [InlineData((short)1, 2, true)]
+    [InlineData((short)2, 2, false)]
+    [InlineData(1L, (short)1, false)]
+    [InlineData(2F, 1D, false)]
+    [InlineData(1F, 2D, true)]
+    [InlineData(42F, 42D, false)]
+    [InlineData(1UL, 2U, true)]
+    public void NumericPromotionDynamic2(object left, object right, bool result)
+    {
+        var f = Lisp.Parse((x, y) => (lt, x, y)).Compile();
+        Assert.Equal(result, f(left, right));
     }
 
     private void AssertResult(object? expected, object? actual)
