@@ -183,5 +183,11 @@ public class DynamicDeclaration: DynamicObject
         return true;
     }
 
+    public override bool TryInvoke(InvokeBinder binder, object?[]? args, out object? result)
+    {
+        result = args?.ToTuple(false) ?? default(ValueTuple);
+        return true;
+    }
+
     private readonly string _prefix;
 }

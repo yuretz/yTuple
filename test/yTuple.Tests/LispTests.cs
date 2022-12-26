@@ -734,6 +734,18 @@ public class LispTests
         Assert.Equal(result, f(left, right));
     }
 
+    [Fact]
+    public void AltNil()
+    {
+        Assert.Equal(nil, _());
+    }
+
+    [Fact]
+    public void AltSingle()
+    {
+        Assert.Equal(Single(42), _(42));
+    }
+
     private void AssertResult(object? expected, object? actual)
     {
         if(expected is ITuple tuple)
